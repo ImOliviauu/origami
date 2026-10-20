@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>OrigamiLab · 数学折纸作图</title>
+<style>
+:root{
+  --bg:#eae6dc; --panel:#fcfbf7; --paper:#fdfcf8;
+  --ink:#141b24; --ink2:#29333e; --muted:#3f4954; --faint:#59626e;
+  --rule:#c6bfad; --rule2:#e0d9c9;
+  --accent:#1a4870; --accent2:#2a6291;
+  --crimson:#8e2c37; --gold:#866721;
+  --serif:"Spectral","Source Serif Pro","Songti SC","STSong","SimSun",Georgia,serif;
+  --sans:"Inter","SF Pro Text",-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:"SF Mono","JetBrains Mono","Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none}
+#app{display:grid;grid-template-columns:312px 1fr;height:100vh;height:100dvh}
+
+/* ---------------- 侧栏 ---------------- */
+#side{display:flex;flex-direction:column;min-height:0;background:var(--panel);border-right:1px solid var(--rule)}
+.brand{padding:20px 20px 15px;border-bottom:1px solid var(--rule2)}
+.brand h1{margin:0;font-family:var(--serif);font-size:19px;font-weight:700;letter-spacing:.03em;color:var(--ink)}
+.brand h1 em{font-style:normal;color:var(--accent)}
+.brand p{margin:6px 0 0;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-family:var(--sans);font-weight:500}
+.chapters{flex:1;overflow-y:auto;padding:14px 12px 16px;scrollbar-width:thin;scrollbar-color:var(--rule) transparent;-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 18px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 18px),transparent)}
+.chapters::-webkit-scrollbar{width:8px}
+.chapters::-webkit-scrollbar-thumb{background:var(--rule);border-radius:4px}
+.chap{margin-bottom:18px}
+.chap-t{display:flex;align-items:baseline;gap:7px;padding:0 8px;font-family:var(--serif);font-size:14px;font-weight:700;color:var(--ink);letter-spacing:.01em}
+.chap-t i{font-style:normal;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--accent);min-width:18px;font-weight:700}
+.chap-s{padding:4px 8px 9px 33px;font-size:12px;color:var(--muted);letter-spacing:.01em;line-height:1.6}
+.lv{width:100%;display:flex;align-items:baseline;gap:8px;padding:6px 8px;text-align:left;border-radius:3px;color:var(--ink2);transition:background .15s,color .15s}
+.lv:hover{background:rgba(26,72,112,.07);color:var(--ink)}
+.lv .n{flex:0 0 22px;font-family:var(--mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;font-weight:500}
+.lv .nm{flex:1;font-family:var(--serif);font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv .ax{font-family:var(--mono);font-size:10px;letter-spacing:.02em;color:#4f5966;font-weight:600}
+.lv .st{font-size:10px;letter-spacing:.02em;color:var(--gold);min-width:22px;text-align:right}
+.lv.on{background:rgba(26,72,112,.1);color:var(--ink)}
+.lv.on .nm{font-weight:700}
+.lv.on .n{color:var(--accent);font-weight:700}
+.lv.on::before{content:"";position:absolute;left:0;width:2px;height:20px;background:var(--accent);margin-top:2px}
+.lv{position:relative}
+.legend{padding:13px 20px 16px;border-top:1px solid var(--rule2);font-size:11.5px;line-height:2;color:var(--ink2);box-shadow:0 -14px 16px -14px rgba(20,27,36,.16);position:relative;z-index:1}
+.legend .t{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:6px;font-weight:600}
+.legend b{font-family:var(--mono);font-weight:700;color:var(--ink);font-size:10.5px;margin-right:2px}
+
+/* ---------------- 主区 ---------------- */
+main{display:flex;flex-direction:column;min-width:0;min-height:0;padding:22px 26px 16px}
+#topbar{display:flex;align-items:flex-start;gap:22px;padding-bottom:13px;border-bottom:1px solid var(--rule)}
+#topbar > div:first-child{flex:1;min-width:0}
+.kicker{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#414b57;font-weight:600}
+.kicker .sep{color:#b8b1a0}
+#lvid{color:var(--accent);font-weight:700}
+#axid{color:var(--crimson);font-weight:700}
+#title{font-family:var(--serif);font-size:24px;font-weight:700;letter-spacing:.01em;margin:0 0 9px;color:var(--ink)}
+#task{margin:0;font-family:var(--serif);font-size:16px;font-weight:600;line-height:1.85;color:#151d26;max-width:780px;letter-spacing:.005em}
+#task b{font-weight:700;color:#0c131b}
+#axnote{margin-top:12px;padding-left:11px;border-left:2px solid #b3aa95;font-family:var(--serif);font-size:14px;font-weight:600;line-height:1.8;color:#2f3945;max-width:780px}
+#axnote b{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--crimson);margin-right:5px;font-weight:700}
+#hud{display:flex;align-items:stretch;gap:0;flex:0 0 auto;margin-left:auto;border:1px solid var(--rule);background:var(--panel)}
+.spec{padding:8px 16px;text-align:center;border-left:1px solid var(--rule2)}
+.spec:first-child{border-left:0}
+.spec .k{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.spec .v{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.35}
+.spec.ok .v{color:var(--accent)}
+
+#stage{position:relative;flex:1;min-height:0;margin-top:14px;border:1px solid var(--rule);background:#e3ded0}
+#board{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#hintbar{position:absolute;left:50%;bottom:14px;transform:translate(-50%,8px);padding:7px 16px;font-size:13px;font-family:var(--serif);font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--rule);opacity:0;pointer-events:none;transition:.2s;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 4px 14px rgba(20,27,36,.1)}
+#hintbar.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------------- 工具条 ---------------- */
+#dock{padding-top:12px}
+.dockin{display:flex;align-items:stretch;flex-wrap:wrap;gap:0;border:1px solid var(--rule);background:var(--panel)}
+.tool{display:flex;align-items:baseline;gap:7px;padding:9px 13px;font-family:var(--serif);font-size:13.5px;font-weight:600;color:var(--ink2);border-right:1px solid var(--rule2);transition:.15s;white-space:nowrap}
+.tool:hover{color:var(--ink);background:rgba(26,72,112,.07)}
+.tool .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.02em;color:var(--accent);font-weight:700}
+.tool.on{color:#fff;background:var(--accent);font-weight:600}
+.tool.on .k{color:rgba(255,255,255,.82);opacity:1}
+.sep{width:1px;background:var(--rule);margin:0}
+.tbtn{padding:9px 14px;font-family:var(--serif);font-size:13.5px;font-weight:600;color:var(--ink2);border-right:1px solid var(--rule2);transition:.15s;white-space:nowrap}
+.tbtn:hover{color:var(--ink);background:rgba(26,72,112,.07)}
+.tbtn:last-child{border-right:0}
+
+/* ---------------- 纸面图元 ---------------- */
+.paperrect{fill:var(--paper);stroke:#bfb7a3;stroke-width:1.2}
+.edge{stroke:#bfb7a3;stroke-width:1.2}
+.givenline{stroke:var(--ink);stroke-width:1.7;stroke-linecap:round;opacity:.92}
+.crease{stroke:var(--crimson);stroke-width:1.8;stroke-linecap:round;opacity:.95}
+.crease.new{animation:drawin .4s ease-out forwards}
+@keyframes drawin{from{stroke-dashoffset:var(--len)}to{stroke-dashoffset:0}}
+.refl{stroke:rgba(142,44,55,.28);stroke-width:1;stroke-dasharray:3 5}
+.cand{stroke:var(--gold);stroke-width:1.9;stroke-dasharray:6 4;cursor:pointer;opacity:1}
+.dpt{fill:rgba(253,252,248,.9);stroke:rgba(26,72,112,.6);stroke-width:1.3}
+.ghost{stroke:rgba(134,103,33,.62);stroke-width:1.3;stroke-dasharray:1 5;stroke-linecap:round}
+.gpt{fill:var(--ink);stroke:var(--paper);stroke-width:1.8}
+.glabel{fill:var(--ink);font-family:var(--serif);font-size:13.5px;font-weight:700;font-style:italic;user-select:none;paint-order:stroke;stroke:rgba(253,252,248,.92);stroke-width:3px;stroke-linejoin:round}
+.pulse{fill:none;stroke:var(--crimson);stroke-width:1.8;animation:pulse 1.1s ease-out forwards}
+@keyframes pulse{0%{r:4;opacity:.9}100%{r:52;opacity:0}}
+.targetp{fill:none;stroke:var(--gold);stroke-width:1.6;stroke-dasharray:2 4}
+.selpoint{fill:rgba(26,72,112,.14);stroke:var(--accent);stroke-width:1.8}
+.selline{stroke:var(--accent);stroke-width:2.2;opacity:.9}
+.hl{stroke:rgba(26,72,112,.55);stroke-width:1.4}
+
+/* ---------------- 过关 ---------------- */
+#win{position:absolute;inset:0;display:grid;place-items:center;z-index:20;background:rgba(234,230,220,.9);opacity:0;pointer-events:none;transition:opacity .3s}
+#win.show{opacity:1;pointer-events:auto}
+.wincard{width:min(420px,88%);padding:30px 32px 24px;text-align:center;background:var(--panel);border:1px solid var(--rule);box-shadow:0 18px 48px rgba(20,27,36,.16);transform:translateY(10px);transition:transform .35s ease}
+#win.show .wincard{transform:none}
+.winkick{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:11px;font-weight:600}
+.wincard h2{margin:0 0 9px;font-family:var(--serif);font-size:23px;font-weight:700;color:var(--ink)}
+.winrule{width:34px;height:1px;background:var(--rule);margin:0 auto 15px}
+.winsub{margin:0;font-family:var(--serif);font-size:14px;line-height:1.85;color:var(--ink2)}
+.winsub b{font-family:var(--mono);color:var(--ink);font-weight:700}
+.stars{display:flex;justify-content:center;gap:8px;margin:17px 0 4px}
+.stars i{font-style:normal;font-size:16px;color:var(--rule);letter-spacing:2px}
+.stars i.on{color:var(--gold)}
+.winrow{display:flex;gap:8px;margin-top:19px}
+.winrow button{flex:1;padding:10px;font-family:var(--serif);font-size:14px;font-weight:500;border:1px solid var(--rule);color:var(--ink2);transition:.15s}
+.winrow button:hover{color:var(--ink);background:rgba(26,72,112,.07)}
+.winrow .primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.winrow .primary:hover{background:#133a5c;color:#fff}
+
+/* ---------------- 提示 ---------------- */
+.scrim{position:fixed;inset:0;background:rgba(20,27,36,.3);opacity:0;pointer-events:none;transition:.22s;z-index:40}
+.scrim.show{opacity:1;pointer-events:auto}
+#hintmodal{position:fixed;left:50%;top:50%;transform:translate(-50%,-47%);width:min(580px,92vw);max-height:86vh;overflow-y:auto;background:var(--panel);border:1px solid var(--rule);padding:28px 30px;z-index:50;opacity:0;pointer-events:none;transition:.26s;box-shadow:0 30px 70px rgba(20,27,36,.22)}
+#hintmodal.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
+#hintmodal h3{margin:0 0 7px;font-family:var(--serif);font-size:18px;font-weight:700;color:var(--ink);letter-spacing:.02em}
+#hintmodal .sub{margin:0 0 17px;padding-bottom:15px;border-bottom:1px solid var(--rule2);font-family:var(--serif);font-size:13.5px;font-weight:500;line-height:1.8;color:var(--ink2)}
+.hintitem{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--rule2);font-family:var(--serif);font-size:14.5px;font-weight:600;line-height:1.9;color:var(--ink2)}
+.hintitem .idx{flex:0 0 20px;font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--accent);padding-top:3px}
+.hintitem.lock{color:var(--muted);cursor:pointer}
+.hintitem.lock .idx{color:var(--faint)}
+.mrow{display:flex;gap:8px;margin-top:19px}
+.mrow button{flex:1;padding:10px;font-family:var(--serif);font-size:13.5px;font-weight:500;border:1px solid var(--rule);color:var(--ink2);transition:.15s}
+.mrow button:hover{color:var(--ink);background:rgba(26,72,112,.07)}
+.mrow .pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.mrow .pri:hover{background:#133a5c;color:#fff}
+
+/* ---------------- 构建条 ---------------- */
+#buildbar{position:absolute;left:50%;top:12px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:7px 13px;background:var(--panel);border:1px solid var(--rule);font-family:var(--serif);font-size:13px;color:var(--ink2);z-index:10;max-width:96%;flex-wrap:wrap;justify-content:center;box-shadow:0 6px 18px rgba(20,27,36,.1)}
+#buildbar .act{font-weight:700;color:var(--ink)}
+#buildbar .slot{display:inline-flex;align-items:baseline;gap:6px;padding:3px 10px;border:1px solid var(--rule2);color:var(--muted);font-size:12.5px}
+#buildbar .slot.filled{border-color:rgba(26,72,112,.4);background:rgba(26,72,112,.06)}
+#buildbar .slot .lbl{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+#buildbar .slot .val{font-family:var(--serif);font-size:13px;color:var(--ink);font-weight:600}
+#buildbar .cancel{padding:3px 9px;border-left:1px solid var(--rule2);color:var(--muted);font-size:12.5px}
+#buildbar .cancel:hover{color:var(--crimson)}
+
+@media(max-width:980px){
+  #app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  #side{position:static;max-height:30vh;overflow:hidden;border-right:0;border-bottom:1px solid var(--rule)}
+  main{padding:14px 12px 10px}
+  #title{font-size:20px}
+  #task{font-size:14px}
+  #axnote{display:none}
+  .tool{padding:8px 10px;font-size:12.5px}
+  .tool .k{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <div class="brand">
+      <h1>Origami <em>Lab</em></h1>
+      <p>数学折纸作图 · Huzita–Justin 七公理</p>
+    </div>
+    <div class="chapters" id="chapterList"></div>
+    <div class="legend">
+      <div class="t">公理</div>
+      <b>O1</b> 过两点　<b>O2</b> 点→点　<b>O3</b> 线→线<br/>
+      <b>O4</b> 线→自身　<b>O5</b> 点→线，过定点<br/>
+      <b>O6</b> 双落线　<b>O7</b> 点→线 + 线→自身
+    </div>
+  </aside>
+
+  <main>
+    <header id="topbar">
+      <div style="min-width:0">
+        <div class="kicker">
+          <span id="lvid">I.1</span><span class="sep">/</span>
+          <span id="axid">O1</span><span class="sep">/</span>
+          <span id="chname"></span>
+        </div>
+        <h1 id="title"></h1>
+        <p id="task"></p>
+        <div id="axnote"></div>
+      </div>
+      <div id="hud">
+        <div class="spec" id="stepPill"><span class="k">折痕</span><span class="v" id="stepNum">0</span></div>
+        <div class="spec opt" id="optPill"><span class="k">参考</span><span class="v" id="optNum">1</span></div>
+      </div>
+    </header>
+
+    <div id="stage">
+      <svg id="board" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="buildbar" style="display:none"></div>
+      <div id="hintbar"></div>
+      <div id="win">
+        <div class="wincard">
+          <div class="winkick">Construction complete</div>
+          <h2>构造完成</h2>
+          <div class="winrule"></div>
+          <p class="winsub" id="winSub"></p>
+          <div class="stars" id="winStars"></div>
+          <div class="winrow">
+            <button class="primary" id="winNext">下一关 →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="dock"><div class="dockin" id="dockTools"></div></div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div id="hintmodal">
+  <h3>解题思路</h3>
+  <p class="sub" id="hmSub"></p>
+  <div id="hintList"></div>
+  <div class="mrow">
+    <button id="btnReveal">显示参考折法</button>
+    <button class="pri" id="btnCloseHint">继续折叠</button>
+  </div>
+</div>
+
+<script>
+/*ENGINE_BEGIN*/
+// 折纸几何引擎（纯函数，可 node 测试）
+// 坐标：y 轴向上，点 {x,y}，直线标准式 {a,b,c}，ax+by+c=0，a²+b²=1
+//
+// Huzita–Justin 七公理：
+//  O1 过两点折                  pp  -> 连线（1 解）
+//  O2 点折到点                  pp  -> 垂直平分线（1 解）
+//  O3 线折到线                  ll  -> 角平分线（2 解）
+//  O4 过点折，使线落到自身       pl  -> 过点且垂直于线（1 解）
+//  O5 点折到线，折痕过另一个点   plq -> 线∩圆（0/1/2 解）
+//  O6 两点分别折到两条线         plpl-> 三次方程（0/1/2/3 解）
+//  O7 点折到线 + 线折到自身      pll -> 唯一解（折痕 ⊥ 该线）
+
+const EPS = 1e-9;
+const TOL = 1e-4;
+
+function P(x, y){ return { x, y }; }
+function L(a, b, c){ const n = Math.hypot(a, b) || 1; return { a: a/n, b: b/n, c: c/n }; }
+function lineThrough(p, q){ return L(q.y - p.y, p.x - q.x, -(q.y - p.y)*p.x - (p.x - q.x)*p.y); }
+
+function interLines(l1, l2){
+  const det = l1.a*l2.b - l2.a*l1.b;
+  if (Math.abs(det) < 1e-10) return null;
+  return { x:(l1.b*l2.c - l2.b*l1.c)/det, y:(l1.c*l2.a - l2.c*l1.a)/det };
+}
+function distPL(l, p){ return l.a*p.x + l.b*p.y + l.c; }
+function samePt(a, b){ return Math.hypot(a.x-b.x, a.y-b.y) < 1e-7; }
+function sameLine(l1, l2){
+  const n1 = Math.hypot(l1.a,l1.b)||1, n2 = Math.hypot(l2.a,l2.b)||1;
+  const a1=l1.a/n1, b1=l1.b/n1, c1=l1.c/n1;
+  const a2=l2.a/n2, b2=l2.b/n2, c2=l2.c/n2;
+  const s = (a1*a2 + b1*b2) >= 0 ? 1 : -1;
+  return Math.abs(a1-s*a2)<TOL && Math.abs(b1-s*b2)<TOL && Math.abs(c1-s*c2)<TOL;
+}
+
+function reflect(l, p){ const d = distPL(l, p); return { x: p.x - 2*l.a*d, y: p.y - 2*l.b*d }; }
+
+// 把直线化成唯一表示：单位法向，且 (a>0) 或 (a=0 且 b>0)
+// 这样「两条角平分线/两条候选折痕」的顺序不依赖玩家点到的线是哪个符号方向
+function canon(l){
+  const n = Math.hypot(l.a, l.b) || 1;
+  let a = l.a/n, b = l.b/n, c = l.c/n;
+  if (a < -1e-12 || (Math.abs(a) <= 1e-12 && b < 0)){ a = -a; b = -b; c = -c; }
+  return { a, b, c };
+}
+function project(l, p){ const d = distPL(l, p); return { x: p.x - l.a*d, y: p.y - l.b*d }; }
+
+// 直线关于折痕的镜像
+function reflectLine(c, m){
+  const q0 = project(m, { x:0, y:0 });
+  const dir = { x: m.b, y: -m.a };
+  const q1 = { x: q0.x + dir.x, y: q0.y + dir.y };
+  const r0 = reflect(c, q0), r1 = reflect(c, q1);
+  if (Math.hypot(r0.x-r1.x, r0.y-r1.y) < 1e-9) return null;
+  return lineThrough(r0, r1);
+}
+
+function addUnique(arr, f){
+  for (const g of arr) if (sameLine(g, f)) return;
+  arr.push(f);
+}
+
+// ---------- 各类折叠的解析解 ----------
+
+// O1：过两点
+function creaseThroughPoints(p, q){
+  if (samePt(p, q)) return [];
+  return [lineThrough(p, q)];
+}
+
+// O2：点折到点 —— 垂直平分线
+function ppBisector(p, q){
+  if (samePt(p, q)) return null;
+  const mx=(p.x+q.x)/2, my=(p.y+q.y)/2, dx=q.x-p.x, dy=q.y-p.y;
+  return L(dx, dy, -(dx*mx + dy*my));
+}
+
+// O3：线折到线 —— 两条角平分线
+function angleBisectors(l1, l2){
+  l1 = canon(l1); l2 = canon(l2);
+  const out = [];
+  addUnique(out, L(l1.a-l2.a, l1.b-l2.b, l1.c-l2.c));
+  addUnique(out, L(l1.a+l2.a, l1.b+l2.b, l1.c+l2.c));
+  return out;
+}
+
+// O4：过点折，使 l 落到自身 —— 过 p 且垂直于 l
+function plPerp(p, l){ return L(l.b, -l.a, -(l.b*p.x - l.a*p.y)); }
+
+// O5：把 p 折到 l 上，折痕必须经过 q
+// 等价于：p 的镜像 p' ∈ l 且 |qp'| = |qp| —— 线 ∩ 圆，0/1/2 解
+function o5Solver(p, l, q){
+  l = canon(l);
+  const r = Math.hypot(q.x-p.x, q.y-p.y);
+  const d = distPL(l, q);
+  const h2 = r*r - d*d;
+  if (h2 < -1e-9) return [];
+  const foot = project(l, q);
+  const dir = { x: l.b, y: -l.a };
+  const h = Math.sqrt(Math.max(0, h2));
+  const out = [];
+  const ts = h < 1e-9 ? [0] : [h, -h];
+  for (const t of ts){
+    const tgt = { x: foot.x + dir.x*t, y: foot.y + dir.y*t };
+    const crease = ppBisector(p, tgt);
+    if (crease) addUnique(out, crease);
+  }
+  return out;
+}
+
+// O7：把 p 折到 l 上，同时让线 m 落到自身（折痕 ⊥ m）—— 唯一解
+function o7Solver(p, l, m){
+  const n = { x: m.b, y: -m.a };          // 折痕法向 ∥ m 方向
+  const ln = l.a*n.x + l.b*n.y;
+  if (Math.abs(ln) < 1e-9) return [];
+  const d = distPL(l, p) / (2*ln);        // 折痕到 p 的有符号距离
+  return [L(n.x, n.y, d - (n.x*p.x + n.y*p.y))];
+}
+
+// O6：p 折到 l，同时 q 折到 m —— 扫描法向角求折痕（0~3 解）
+function plplSolver(p, l, q, m){
+  l = canon(l); m = canon(m);
+  const sp = distPL(l, p), sq = distPL(m, q);
+  const N = 20000, out = [];
+  let prev = null;
+  const f = (phi) => {
+    const a = Math.cos(phi), b = Math.sin(phi);
+    const ln = l.a*a + l.b*b, mn = m.a*a + m.b*b;
+    if (Math.abs(ln) < 1e-7 || Math.abs(mn) < 1e-7) return null;
+    const c1 = sp/(2*ln) - (a*p.x + b*p.y);
+    const c2 = sq/(2*mn) - (a*q.x + b*q.y);
+    return { a, b, r: c1 - c2, c: (c1+c2)/2, ln, mn };
+  };
+  const root = (phi) => {
+    let lo = phi - 2*Math.PI/N, hi = phi;
+    let flo = f(lo), fhi = f(hi);
+    for (let it = 0; it < 80; it++){
+      const mid = (lo+hi)/2, fm = f(mid);
+      if (!fm) { lo = mid; continue; }
+      if (fm.r * flo.r <= 0){ hi = mid; fhi = fm; }
+      else { lo = mid; flo = fm; }
+    }
+    const fm = f((lo+hi)/2);
+    return fm ? L(fm.a, fm.b, fm.c) : null;
+  };
+  for (let i = 0; i <= N; i++){
+    const phi = 2*Math.PI*i/N;
+    const v = f(phi);
+    if (!v){ prev = null; continue; }
+    if (prev !== null && prev.r * v.r < 0){
+      const r = root(phi);
+      if (r) addValid(out, r, p, l, q, m);
+    }
+    if (Math.abs(v.r) < 1e-12) addValid(out, L(v.a, v.b, v.c), p, l, q, m);
+    prev = v;
+  }
+  return out;
+}
+// 极点在扫描中会造成伪根：用「镜像点确实落在目标线上」复核
+function addValid(out, c, p, l, q, m){
+  const pp = reflect(c, p), qq = reflect(c, q);
+  if (Math.abs(distPL(l, pp)) > 1e-6) return;
+  if (Math.abs(distPL(m, qq)) > 1e-6) return;
+  addUnique(out, c);
+}
+
+// ---------- 统一入口：把一个「折叠指令」解成候选折痕 ----------
+// step = {op, ...}
+function resolveOp(step){
+  if (!step || !step.op) return [];
+  const pt = a => P(a[0], a[1]);
+  switch (step.op){
+    case 'O1': return creaseThroughPoints(pt(step.p), pt(step.q));
+    case 'O2': { const c = ppBisector(pt(step.p), pt(step.q)); return c ? [c] : []; }
+    case 'O3': return angleBisectors(step.l, step.m);
+    case 'O4': return [plPerp(pt(step.p), step.l)];
+    case 'O5': return o5Solver(pt(step.p), step.l, pt(step.q));
+    case 'O6': return plplSolver(pt(step.a.p), step.a.l, pt(step.b.p), step.b.l);
+    case 'O7': return o7Solver(pt(step.p), step.l, step.m);
+    default: return [];
+  }
+}
+function pickCrease(step){
+  const cands = resolveOp(step);
+  if (!cands.length) return null;
+  return cands[step.k || 0] || cands[0];
+}
+
+function hasLine(lines, target){ return lines.some(g => sameLine(g, target)); }
+/*ENGINE_END*/
+
+// ===== 题库：纸上只有点，所有直线都要自己折 =====
+// 目标：{type:'point',at:[x,y]} | {type:'line',line} | {type:'and',of} | {type:'or',of}
+// 解法 step：
+//   O1 {op:'O1',p,q}                 过两点
+//   O2 {op:'O2',p,q}                 点→点
+//   O3 {op:'O3',l,m,k}               线→线（k 选哪条角平分线）
+//   O4 {op:'O4',p,l}                 过点作垂线
+//   O5 {op:'O5',p,l,q,k}             点→线，折痕过 q
+//   O6 {op:'O6',a:{p,l},b:{p,l},k}   双落线
+//   O7 {op:'O7',p,l,m}               点→线 + 线→自身
+const LN = (a, b, c) => L(a, b, c);
+const H = y => L(0, 1, -y);
+const V = x => L(1, 0, -x);
+const SGL = (p, q) => lineThrough(P(p[0], p[1]), P(q[0], q[1]));
+const RAY = deg => { const t = deg * Math.PI / 180; return L(Math.sin(t), -Math.cos(t), 0); };
+const G = {
+  point: (x, y) => ({ type: 'point', at: [x, y] }),
+  line: l => ({ type: 'line', line: l }),
+  and: (...of) => ({ type: 'and', of: of.flat() }),
+  or: (...of) => ({ type: 'or', of: of.flat() }),
+  orLines: cs => ({ type: 'or', of: cs.map(c => ({ type: 'line', line: c })) })
+};
+const CHAPTERS = [
+  { id: 0, name: "第一章 · 基础折叠", sub: "O1–O4：折痕的基本语言" },
+  { id: 1, name: "第二章 · 经典几何", sub: "公理的组合与经典构型" },
+  { id: 2, name: "第三章 · 双落线", sub: "O5–O7：一次折叠两个约束" },
+  { id: 3, name: "第四章 · 精确分割", sub: "Haga 定理 · 纸张算术" },
+  { id: 4, name: "第五章 · 挑战", sub: "多目标 · 最少折痕" },
+  { id: 5, name: "第六章 · 三次方程", sub: "抛物线公切线 · 正七边形" }
+];
+
+const LEVELS = [
+  {
+    id: 'l01', ch: 0, axiom: 'O1', name: "两点连线",
+    task: "作出经过 <b>A、B</b> 两点的直线。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1, 1], ['B', 4.5, 3.5]],
+    goal: G.line(LN(0.581238193719, -0.813733471207, 0.232495277488)), optimal: 1,
+    hints: ["用「过两点」：依次点 A、B。","折痕就是直线 AB —— 折纸里最朴素的操作。"],
+    solution: [
+      { op:'O1', p:[1, 1], q:[4.5, 3.5] }
+    ]
+  },
+  {
+    id: 'l02', ch: 0, axiom: 'O2', name: "线段中点",
+    task: "作出线段 <b>AB</b> 的中点：AB 上到 A、B 距离相等的那个点。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1, 1], ['B', 5, 1]],
+    goal: G.point(3, 1), optimal: 2,
+    hints: ["过 A、B 折一次（O1），把水平线 y=1 折出来（直线 AB）。","把 A(1,1) 折到 B(5,1) 上。","折痕是 x=3，与 AB 交于 (3,1)。"],
+    solution: [
+      { op:'O1', p:[1, 1], q:[5, 1] },
+      { op:'O2', p:[1, 1], q:[5, 1] }
+    ]
+  },
+  {
+    id: 'l03', ch: 0, axiom: 'O2', name: "垂直平分线",
+    task: "作出线段 <b>AB</b> 的垂直平分线：与 AB 垂直、且过 AB 中点的直线。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1, 2], ['B', 4, 5]],
+    goal: G.line(LN(0.707106781187, 0.707106781187, -4.24264068712)), optimal: 1,
+    hints: ["把 A 折到 B，折痕自动垂直 AB 且过中点。","中点 (2.5,3.5)、AB 斜率 1，所以折痕是 x+y=6。"],
+    solution: [
+      { op:'O2', p:[1, 2], q:[4, 5] }
+    ]
+  },
+  {
+    id: 'l04', ch: 0, axiom: 'O4', name: "过点作垂线",
+    task: "过点 <b>C</b> 作直线 <b>l</b>（过 l₁、l₂）的垂线：与 l 成 90° 且经过 C。",
+    paper: { w: 6, h: 6 },
+    points: [['C', 4, 4], ['l₁', 0, 1.5], ['l₂', 6, 1.5]],
+    goal: G.line(V(4)), optimal: 2,
+    hints: ["过 l₁、l₂ 折一次（O1），把水平线 y=1.5 折出来（直线 l）。","选「过点作垂线」：先点 C，再点 l。","折痕是 x=4。"],
+    solution: [
+      { op:'O1', p:[0, 1.5], q:[6, 1.5] },
+      { op:'O4', p:[4, 4], l:H(1.5) }
+    ]
+  },
+  {
+    id: 'l05', ch: 0, axiom: 'O3', name: "角平分线",
+    task: "作出 <b>∠BAC</b> 的角平分线：从 A 出发、落在射线 <b>AB</b> 与 <b>AC</b> 之间，并且与两边夹角相等的那条线。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 2, 1], ['B', 6, 1], ['C', 2, 5]],
+    goal: G.line(LN(-0.707106781187, 0.707106781187, 0.707106781187)), optimal: 3,
+    hints: ["过 A、B 折一次（O1），把水平线 y=1 折出来（直线 AB）。","过 A、C 折一次（O1），把竖直线 x=2 折出来（直线 AC）。","把 AB（y=1）折到 AC（x=2）上。","O3 给两条角平分线，要开口朝右上那条：y=x−1。"],
+    solution: [
+      { op:'O1', p:[2, 1], q:[6, 1] },
+      { op:'O1', p:[2, 1], q:[2, 5] },
+      { op:'O3', l:H(1), m:V(2), k:0 }
+    ]
+  },
+  {
+    id: 'l06', ch: 0, axiom: 'O3', name: "22.5° 线",
+    task: "把直角 <b>∠AOB</b> 四等分，作出与 <b>OA</b> 成 <b>22.5°</b> 的直线（落在角内的第一条等分线）。",
+    paper: { w: 6, h: 6 },
+    points: [['O', 0, 0], ['A', 6, 0], ['B', 0, 6]],
+    goal: G.line(LN(-0.382683432365, 0.923879532511, 0)), optimal: 2,
+    hints: ["第一次：把 OA 折到 OB 上，得 45° 线 y=x。","第二次：把 OA 折到 y=x 上，取 22.5° 那条。"],
+    solution: [
+      { op:'O3', l:H(0), m:V(0), k:0 },
+      { op:'O3', l:H(0), m:LN(0.707106781187, -0.707106781187, 0), k:0 }
+    ]
+  },
+  {
+    id: 'l07', ch: 1, axiom: 'O4×2', name: "过点作平行线",
+    task: "过点 <b>P</b> 作直线 <b>l</b>（过 l₁、l₂）的平行线：两者不相交、处处等距。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 3, 4], ['l₁', 0, 1], ['l₂', 6, 1]],
+    goal: G.line(H(4)), optimal: 3,
+    hints: ["过 l₁、l₂ 折一次（O1），把水平线 y=1 折出来（直线 l）。","第一次：过 P 作 l 的垂线，得 x=3。","第二次：过 P 作 x=3 的垂线，得 y=4，平行于 l。"],
+    solution: [
+      { op:'O1', p:[0, 1], q:[6, 1] },
+      { op:'O4', p:[3, 4], l:H(1) },
+      { op:'O4', p:[3, 4], l:V(3) }
+    ]
+  },
+  {
+    id: 'l08', ch: 1, axiom: 'O4×2', name: "作垂心",
+    task: "作出 <b>△ABC</b> 的垂心：三条高（顶点到对边的垂线）的交点。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0.5, 0.5], ['B', 5.5, 0.5], ['C', 1.5, 4.5]],
+    goal: G.point(1.5, 1.5), optimal: 4,
+    hints: ["过 A、B 折一次（O1），把水平线 y=0.5 折出来（直线 AB）。","过 B、C 折一次（O1），把那条斜线 折出来（直线 BC）。","AB 水平 → 过 C 作 AB 的垂线：x=1.5。","BC 斜率 −1 → 过 A 作 BC 的垂线：y=x。两高交于 (1.5,1.5)。"],
+    solution: [
+      { op:'O1', p:[0.5, 0.5], q:[5.5, 0.5] },
+      { op:'O1', p:[5.5, 0.5], q:[1.5, 4.5] },
+      { op:'O4', p:[1.5, 4.5], l:H(0.5) },
+      { op:'O4', p:[0.5, 0.5], l:LN(0.707106781187, 0.707106781187, -4.24264068712) }
+    ]
+  },
+  {
+    id: 'l09', ch: 1, axiom: 'O2×2', name: "作外心",
+    task: "作出 <b>△ABC</b> 的外心：到 A、B、C 三点距离相等的点。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0, 1], ['B', 6, 1], ['C', 2, 4.5]],
+    goal: G.point(3, 1.607143), optimal: 2,
+    hints: ["把 A 折到 B：x=3。","把 C 折到 A：AC 中点 (1,2.75)、斜率 7/4，垂线斜率 −4/7，与 x=3 交于 (3,1.6071)。"],
+    solution: [
+      { op:'O2', p:[0, 1], q:[6, 1] },
+      { op:'O2', p:[2, 4.5], q:[0, 1] }
+    ]
+  },
+  {
+    id: 'l10', ch: 1, axiom: 'O3×2', name: "作内心",
+    task: "作出 <b>△ABC</b> 的内心：到三条边距离相等的点，也就是内切圆的圆心。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0, 0], ['B', 6, 0], ['C', 0, 4]],
+    goal: G.point(1.394449, 1.394449), optimal: 3,
+    hints: ["过 B、C 折一次（O1），把那条斜线 折出来（直线 BC）。","直角顶点的角平分线是 y=x。","再平分 B 处的角，交于 (r,r)，r=(6+4−√52)/2≈1.3944。"],
+    solution: [
+      { op:'O1', p:[6, 0], q:[0, 4] },
+      { op:'O3', l:H(0), m:V(0), k:0 },
+      { op:'O3', l:H(0), m:LN(0.554700196225, 0.832050294338, -3.32820117735), k:1 }
+    ]
+  },
+  {
+    id: 'l11', ch: 1, axiom: 'O4×2', name: "正方形的两条邻边",
+    task: "以 <b>AB</b> 为一边作正方形：作出过 A 与过 B 的两条邻边（都垂直于 AB）。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1, 1], ['B', 4, 1]],
+    goal: G.and(G.line(V(1)), G.line(V(4))), optimal: 3,
+    hints: ["过 A、B 折一次（O1），把水平线 y=1 折出来（直线 AB）。","过 A 作 AB 的垂线：x=1。","过 B 作 AB 的垂线：x=4。"],
+    solution: [
+      { op:'O1', p:[1, 1], q:[4, 1] },
+      { op:'O4', p:[1, 1], l:H(1) },
+      { op:'O4', p:[4, 1], l:H(1) }
+    ]
+  },
+  {
+    id: 'l12', ch: 1, axiom: 'O3+O4', name: "内切圆切点",
+    task: "作出 <b>△ABC</b> 的内切圆与边 <b>AB</b> 的切点。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0, 0], ['B', 6, 0], ['C', 0, 4]],
+    goal: G.point(1.394449, 0), optimal: 4,
+    hints: ["过 B、C 折一次（O1），把那条斜线 折出来（直线 BC）。","两条角平分线交于内心 I≈(1.3944,1.3944)。","过 I 作 AB 的垂线，垂足就是切点。"],
+    solution: [
+      { op:'O1', p:[6, 0], q:[0, 4] },
+      { op:'O3', l:H(0), m:V(0), k:0 },
+      { op:'O3', l:H(0), m:LN(0.554700196225, 0.832050294338, -3.32820117735), k:1 },
+      { op:'O4', p:[1.394449, 1.394449], l:H(0) }
+    ]
+  },
+  {
+    id: 'l13', ch: 1, axiom: 'O2×2', name: "四等分纸张",
+    task: "把这张正方形纸分成四个全等的小正方形：作出两条分界线，一条竖直、一条水平。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0, 0], ['B', 6, 0], ['C', 6, 6], ['D', 0, 6]],
+    goal: G.and(G.line(V(3)), G.line(H(3))), optimal: 2,
+    hints: ["把 A 折到 B：x=3。","把 A 折到 D：y=3。"],
+    solution: [
+      { op:'O2', p:[0, 0], q:[6, 0] },
+      { op:'O2', p:[0, 0], q:[0, 6] }
+    ]
+  },
+  {
+    id: 'l38', ch: 1, axiom: 'O1+O4', name: "高的垂足",
+    task: "作出点 <b>C</b> 在直线 <b>AB</b> 上的垂足：从 C 向 AB 作垂线，垂线与 AB 的交点。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0.5, 0.5], ['B', 5.5, 0.5], ['C', 1.5, 4.5]],
+    goal: G.point(1.5, 0.5), optimal: 2,
+    hints: ["过 A、B 折一次（O1），把水平线 y=0.5 折出来（直线 AB）。","折一道过 A、B 的折痕（O1），把 AB 折出来。","再过 C 作 AB 的垂线（O4）：折痕 x=1.5，与 AB 交于 (1.5,0.5)。"],
+    solution: [
+      { op:'O1', p:[0.5, 0.5], q:[5.5, 0.5] },
+      { op:'O4', p:[1.5, 4.5], l:H(0.5) }
+    ]
+  },
+  {
+    id: 'l39', ch: 1, axiom: 'O2×2+O1×2', name: "作重心",
+    task: "作出 <b>△ABC</b> 的重心：三条中线的交点。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0.5, 0.5], ['B', 5.5, 0.5], ['C', 1.5, 4.5]],
+    goal: G.point(2.5, 1.833333), optimal: 6,
+    hints: ["过 A、B 折一次（O1），把水平线 y=0.5 折出来（直线 AB）。","过 A、C 折一次（O1），把那条斜线 折出来（直线 CA）。","把 A 折到 B：x=3，与 AB 交于中点 (3,0.5)。","把 A 折到 C：与 CA 交于中点 (1,2.5)。","两条中线的交点就是重心 ((xA+xB+xC)/3, (yA+yB+yC)/3) = (2.5, 1.8333)。"],
+    solution: [
+      { op:'O1', p:[0.5, 0.5], q:[5.5, 0.5] },
+      { op:'O1', p:[0.5, 0.5], q:[1.5, 4.5] },
+      { op:'O2', p:[0.5, 0.5], q:[5.5, 0.5] },
+      { op:'O1', p:[1.5, 4.5], q:[3, 0.5] },
+      { op:'O2', p:[0.5, 0.5], q:[1.5, 4.5] },
+      { op:'O1', p:[5.5, 0.5], q:[1, 2.5] }
+    ]
+  },
+  {
+    id: 'l40', ch: 1, axiom: 'O4+O3', name: "45° 线",
+    task: "过点 <b>P</b> 作一条与直线 <b>l</b>（过 P、l′）成 <b>45°</b> 的直线，取朝右上、斜率 <b>+1</b> 的那一条。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 2, 1], ['l′', 6, 1]],
+    goal: G.line(LN(0.707106781187, -0.707106781187, -0.707106781187)), optimal: 3,
+    hints: ["过 P、l′ 折一次（O1），把水平线 y=1 折出来（直线 l）。","先过两点折出 l（y=1）。","再过 P 作 l 的垂线（O4）：x=2。","把 l 与 x=2 折到一起（O3）：两条角平分线中，斜率 +1 的那条就是 45°。"],
+    solution: [
+      { op:'O1', p:[2, 1], q:[6, 1] },
+      { op:'O4', p:[2, 1], l:H(1) },
+      { op:'O3', l:H(1), m:V(2), k:0 }
+    ]
+  },
+  {
+    id: 'l14', ch: 2, axiom: 'O5', name: "过定点的落线（O5）",
+    task: "折一条经过 <b>Q</b> 的折痕，同时使 <b>P</b> 落在直线 <b>l</b>（过 l₁、l₂）上。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 1, 4], ['Q', 5, 3], ['l₁', 0, 1], ['l₂', 6, 1]],
+    goal: G.or(G.line(LN(0.930246727263, -0.366934635073, -3.5504297311)), G.line(LN(0.130360912825, -0.991466606804, 2.32259525629))), optimal: 2,
+    hints: ["过 l₁、l₂ 折一次（O1），把水平线 y=1 折出来（直线 l）。","折痕必须过 Q，且 P 的镜像要落在 l 上。","以 Q 为圆心、|QP| 为半径作圆，与 l 的交点就是落点 P′，折痕是 PP′ 的中垂线。"],
+    solution: [
+      { op:'O1', p:[0, 1], q:[6, 1] },
+      { op:'O5', p:[1, 4], l:H(1), q:[5, 3], k:0 }
+    ]
+  },
+  {
+    id: 'l15', ch: 2, axiom: 'O2+O5', name: "正三角形",
+    task: "以 <b>AB</b> 为一边作正三角形，作出 AB 上方那个顶点 <b>C</b>（三条边等长）。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1, 1], ['B', 5, 1]],
+    goal: G.point(3, 4.46410161514), optimal: 2,
+    hints: ["先作 AB 的垂直平分线 x=3。","再用 O5：把 A 折到 x=3 上、折痕过 B。A 的落点满足 |BA′|=|BA|=4，正是正三角形顶点。"],
+    solution: [
+      { op:'O2', p:[1, 1], q:[5, 1] },
+      { op:'O5', p:[1, 1], l:V(3), q:[5, 1], k:1 }
+    ]
+  },
+  {
+    id: 'l16', ch: 2, axiom: 'O7', name: "方向锁定（O7）",
+    task: "折一条垂直于直线 <b>m</b>（过 m₁、m₂）的折痕，同时把 <b>P</b> 折到直线 <b>l</b>（过 l₁、l₂）上。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 4, 5], ['l₁', 1, 0], ['l₂', 1, 6], ['m₁', 0, 2], ['m₂', 6, 2]],
+    goal: G.line(V(2.5)), optimal: 3,
+    hints: ["过 l₁、l₂ 折一次（O1），把竖直线 x=1 折出来（直线 l）。","过 m₁、m₂ 折一次（O1），把水平线 y=2 折出来（直线 m）。","m 水平，所以折痕必须竖直。","P(4,5) 关于 x=t 的镜像是 (2t−4,5)，要落在 x=1 上，得 t=2.5。"],
+    solution: [
+      { op:'O1', p:[1, 0], q:[1, 6] },
+      { op:'O1', p:[0, 2], q:[6, 2] },
+      { op:'O7', p:[4, 5], l:V(1), m:H(2) }
+    ]
+  },
+  {
+    id: 'l16b', ch: 2, axiom: 'O7', name: "斜方向的方向锁定",
+    task: "这里的 <b>m</b> 是斜的对角线（过 m₁、m₂）：折痕要垂直于它，同时把 <b>P</b> 折到直线 <b>l</b>（过 l₁、l₂，x=1）上。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 4, 5], ['l₁', 1, 0], ['l₂', 1, 6], ['m₁', 0, 0], ['m₂', 6, 6]],
+    goal: G.line(LN(0.707106781187, 0.707106781187, -4.24264068712)), optimal: 3,
+    hints: ["过 l₁、l₂ 折一次（O1），把竖直线 x=1 折出来（直线 l）。","过 m₁、m₂ 折一次（O1），把那条斜线 折出来（直线 m）。","m 是 y=x，所以折痕的斜率必须是 −1，即形如 x+y=c 或 x−y=c。","折痕形如 x+y=c。P(4,5) 的镜像是 (c−5, c−4)，要落在 x=1 上，得 c=6：折痕 x+y=6。"],
+    solution: [
+      { op:'O1', p:[1, 0], q:[1, 6] },
+      { op:'O1', p:[0, 0], q:[6, 6] },
+      { op:'O7', p:[4, 5], l:V(1), m:LN(0.707106781187, -0.707106781187, 0) }
+    ]
+  },
+  {
+    id: 'l17', ch: 2, axiom: 'O6', name: "两点同时落线（O6）",
+    task: "一次折叠完成两个约束：把 <b>P</b> 折到左边 <b>x=0</b> 上，同时把 <b>Q</b> 折到底边 <b>y=0</b> 上。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 1, 4], ['Q', 4, 5]],
+    goal: G.or(G.line(LN(0.707106781187, 0.707106781187, -2.82842712475))), optimal: 1,
+    hints: ["选「双落线」：P → x=0，Q → y=0。","候选折痕通常两条，界面会让你挑一条。"],
+    solution: [
+      { op:'O6', a:{ p:[1, 4], l:V(0) }, b:{ p:[4, 5], l:H(0) }, k:0 }
+    ]
+  },
+  {
+    id: 'l18', ch: 2, axiom: 'O6', name: "三等分 60° 角",
+    task: "把 <b>∠AOB=60°</b> 三等分：作出与 <b>OA</b> 成 <b>40°</b> 的直线，其中 OB 是过 O 与 OB′ 的射线。",
+    paper: { w: 6, h: 6 },
+    points: [['O', 0, 0], ['A', 6, 0], ['E', 0, 2], ['OB′', 3.46410161514, 6], ['L1₁', 0, 1], ['L1₂', 6, 1]],
+    goal: G.line(LN(0.642787609687, -0.766044443119, 0)), optimal: 3,
+    hints: ["过 O、OB′ 折一次（O1），把那条斜线 折出来（直线 OB）。","过 L1₁、L1₂ 折一次（O1），把水平线 y=1 折出来（直线 L1）。","E 在 O 正上方 2 处：它是构造里唯一需要的额外点。","双落线：E → OB，O → L1。","把 L1 沿折痕镜像，得到过 O 的 40° 线。"],
+    solution: [
+      { op:'O1', p:[0, 0], q:[3.46410161514, 6] },
+      { op:'O1', p:[0, 1], q:[6, 1] },
+      { op:'O6', a:{ p:[0, 2], l:LN(0.866025403784, -0.5, 0) }, b:{ p:[0, 0], l:H(1) }, k:0 }
+    ]
+  },
+  {
+    id: 'l19', ch: 2, axiom: 'O6', name: "三等分 45° 角",
+    task: "把 <b>∠AOB=45°</b> 三等分：作出与 <b>OA</b> 成 <b>30°</b> 的直线，其中 OB 是过 O 与 OB′ 的射线。",
+    paper: { w: 6, h: 6 },
+    points: [['O', 0, 0], ['A', 6, 0], ['E', 0, 2], ['OB′', 6, 6], ['L1₁', 0, 1], ['L1₂', 6, 1]],
+    goal: G.line(LN(0.5, -0.866025403784, 0)), optimal: 3,
+    hints: ["过 O、OB′ 折一次（O1），把那条斜线 折出来（直线 OB）。","过 L1₁、L1₂ 折一次（O1），把水平线 y=1 折出来（直线 L1）。","同样的配方：E=(0,2) → OB，O → L1。","镜像 L1，得 30° 线。"],
+    solution: [
+      { op:'O1', p:[0, 0], q:[6, 6] },
+      { op:'O1', p:[0, 1], q:[6, 1] },
+      { op:'O6', a:{ p:[0, 2], l:LN(0.707106781187, -0.707106781187, 0) }, b:{ p:[0, 0], l:H(1) }, k:0 }
+    ]
+  },
+  {
+    id: 'l20', ch: 2, axiom: 'O6', name: "倍立方 ∛2",
+    task: "作出 <b>∛2</b>——体积翻倍的正方体边长倍率。<br>目标：右边缘 <b>x=6</b> 上高度为 <b>6/(1+∛2)≈2.6550</b> 的那个点，这个高度与 ∛2 一一对应。",
+    paper: { w: 6, h: 6 },
+    points: [['P1', 0, 0], ['P2', 0, 2], ['L2₁', 0, 4], ['L2₂', 6, 4]],
+    goal: G.point(6, 2.65496000415), optimal: 2,
+    hints: ["过 L2₁、L2₂ 折一次（O1），把水平线 y=4 折出来（直线 L2）。","P2 在左边缘 y=2，正好是纸高的 1/3；把 L2(y=4) 折出来当第二条准线。","双落线：P1 → 右边缘 x=6，P2 → L2(y=4)。","P1 落在右边缘高度 y=6/(1+∛2)≈2.655，于是 ∛2 = 6/y − 1。"],
+    solution: [
+      { op:'O1', p:[0, 4], q:[6, 4] },
+      { op:'O6', a:{ p:[0, 0], l:V(6) }, b:{ p:[0, 2], l:H(4) }, k:0 }
+    ]
+  },
+  {
+    id: 'l20b', ch: 2, axiom: 'O6', name: "三等分 100°：任意角",
+    task: "把 <b>∠AOB=100°</b> 三等分：作出与 <b>OA</b> 成 <b>200/3≈66.667°</b> 的直线，其中 OB 是过 O 与 OB′ 的射线。",
+    paper: { w: 6, h: 6 },
+    points: [['O', 1, 1], ['A', 6, 1], ['E', 1, 3], ['OB′', 0.118365096458, 6], ['L1₁', 0, 2], ['L1₂', 6, 2]],
+    goal: G.line(LN(0.91821610688, -0.396079766039, -0.522136340841)), optimal: 3,
+    hints: ["过 O、OB′ 折一次（O1），把那条斜线 折出来（直线 OB）。","过 L1₁、L1₂ 折一次（O1），把水平线 y=2 折出来（直线 L1）。","E=(1,3) 在过 O 的竖直线上、到 OA 的距离为 2。","三步不变：E → OB，O → L1。","三条候选折痕里，只有一条把 L1 映成过 O 的 200/3° 线。"],
+    solution: [
+      { op:'O1', p:[1, 1], q:[0.118365096458, 6] },
+      { op:'O1', p:[0, 2], q:[6, 2] },
+      { op:'O6', a:{ p:[1, 3], l:LN(0.984807753012, 0.173648177667, -1.15845593068) }, b:{ p:[1, 1], l:H(2) }, k:0 }
+    ]
+  },
+  {
+    id: 'l41', ch: 2, axiom: 'O5', name: "O5 的边界情形：相切",
+    task: "折痕要经过 <b>Q</b>，同时把 <b>P</b> 折到直线 <b>l</b>（过 l₁、l₂）上。作出 P 的落点——这个摆法下解是唯一的。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 1, 4], ['Q', 4, 4], ['l₁', 0, 1], ['l₂', 6, 1]],
+    goal: G.point(4, 1), optimal: 2,
+    hints: ["过 l₁、l₂ 折一次（O1），把水平线 y=1 折出来（直线 l）。","P 的落点必须在以 Q 为心、|QP|=3 的圆上，同时落在 l 上。","Q 到 l 的距离正好是 3，所以圆与 l 相切于 (4,1)——唯一解。","折痕是 P(1,4) 与切点 (4,1) 的垂直平分线：y=x。"],
+    solution: [
+      { op:'O1', p:[0, 1], q:[6, 1] },
+      { op:'O5', p:[1, 4], l:H(1), q:[4, 4], k:0 }
+    ]
+  },
+  {
+    id: 'l42', ch: 2, axiom: 'O6', name: "三等分 120°：钝角",
+    task: "把钝角 <b>∠AOB=120°</b> 三等分：作出与 <b>OA</b> 成 <b>80°</b> 的直线，其中 OB 是过 O 与 OB′ 的射线。",
+    paper: { w: 6, h: 6 },
+    points: [['O', 3, 3], ['A', 6, 3], ['E', 3, 5], ['OB′', 1.26794919243, 6], ['L1₁', 0, 4], ['L1₂', 6, 4]],
+    goal: G.line(LN(0.984807753012, -0.173648177667, -2.43347872604)), optimal: 3,
+    hints: ["过 O、OB′ 折一次（O1），把那条斜线 折出来（直线 OB）。","过 L1₁、L1₂ 折一次（O1），把水平线 y=4 折出来（直线 L1）。","E=(3,5) 在 O 正上方 2 处，正好落在 L2 上；L1 是距 OA 为 1 的水平线。","双落线：E → OB，O → L1。","三条候选折痕里只有一条把 L1 映成过 O 的 80° 线。"],
+    solution: [
+      { op:'O1', p:[3, 3], q:[1.26794919243, 6] },
+      { op:'O1', p:[0, 4], q:[6, 4] },
+      { op:'O6', a:{ p:[3, 5], l:LN(0.866025403784, 0.5, -4.09807621135) }, b:{ p:[3, 3], l:H(4) }, k:0 }
+    ]
+  },
+  {
+    id: 'l21', ch: 3, axiom: 'O6+O4', name: "三等分底边",
+    task: "把底边（从 x=0 到 x=6）三等分：作出直线 <b>mid</b>（过 mid₁、mid₂，y=3）上横坐标为 <b>2</b> 的点，以及过它的竖直线 <b>x=2</b>。",
+    paper: { w: 6, h: 6 },
+    points: [['C', 6, 6], ['M', 3, 0], ['mid₁', 0, 3], ['mid₂', 6, 3]],
+    goal: G.and(G.point(2, 3), G.line(V(2))), optimal: 3,
+    hints: ["过 mid₁、mid₂ 折一次（O1），把水平线 y=3 折出来（直线 mid）。","双落线：右上角 C → 底边 y=0，底边中点 M → 中线 y=3。","M 会落在 (2,3)：横坐标正好是 6 的 1/3。","再过 (2,3) 作底边垂线，就是 x=2。"],
+    solution: [
+      { op:'O1', p:[0, 3], q:[6, 3] },
+      { op:'O6', a:{ p:[6, 6], l:H(0) }, b:{ p:[3, 0], l:H(3) }, k:1 },
+      { op:'O4', p:[2, 3], l:H(0) }
+    ]
+  },
+  {
+    id: 'l22', ch: 3, axiom: 'O5', name: "2/3 点",
+    task: "只折一次，就在顶边 <b>y=6</b> 上作出横坐标为 <b>4</b> 的点（底边长 6 的 2/3 处）。",
+    paper: { w: 6, h: 6 },
+    points: [['N', 0, 3], ['B', 6, 0]],
+    goal: G.point(4, 6), optimal: 1,
+    hints: ["N=(0,3) 要落到 y=6，折痕必须过 B=(6,0)。","以 B 为圆心、|BN| 为半径的圆与顶边的交点即落点。"],
+    solution: [
+      { op:'O5', p:[0, 3], l:H(6), q:[6, 0], k:0 }
+    ]
+  },
+  {
+    id: 'l23', ch: 3, axiom: 'O1+O2+O5', name: "正三角形的三条边",
+    task: "以 <b>A、B</b> 为一边作正三角形，把 A、B 到第三个顶点的两条边都折出来（顶点在 AB 上方）。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1, 1], ['B', 5, 1]],
+    goal: G.and(G.line(LN(0.866025403784, -0.5, -0.366025403784)), G.line(LN(0.866025403784, 0.5, -4.83012701892))), optimal: 4,
+    hints: ["O2 作中线，O5 得顶点 C=(3, 1+2√3)。","O1 分别连 A—C 与 B—C。"],
+    solution: [
+      { op:'O2', p:[1, 1], q:[5, 1] },
+      { op:'O5', p:[1, 1], l:V(3), q:[5, 1], k:1 },
+      { op:'O1', p:[1, 1], q:[3, 4.46410161514] },
+      { op:'O1', p:[5, 1], q:[3, 4.46410161514] }
+    ]
+  },
+  {
+    id: 'l24', ch: 3, axiom: 'O4×3', name: "三条高",
+    task: "把 <b>△ABC</b> 的<b>三条高</b>全部折出来：每个顶点到对边的垂线各一条。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0.5, 0.5], ['B', 5.5, 0.5], ['C', 1.5, 4.5]],
+    goal: G.and(G.line(V(1.5)), G.line(LN(0.707106781187, -0.707106781187, 0)), G.line(LN(0.242535625036, 0.970142500145, -1.81901718777))), optimal: 6,
+    hints: ["过 A、B 折一次（O1），把水平线 y=0.5 折出来（直线 AB）。","过 B、C 折一次（O1），把那条斜线 折出来（直线 BC）。","过 A、C 折一次（O1），把那条斜线 折出来（直线 CA）。","过 C 作 AB 的垂线：x=1.5。","过 A 作 BC 的垂线：y=x。","过 B 作 CA 的垂线（CA 斜率 4，所以这条高斜率 −1/4）。"],
+    solution: [
+      { op:'O1', p:[0.5, 0.5], q:[5.5, 0.5] },
+      { op:'O1', p:[5.5, 0.5], q:[1.5, 4.5] },
+      { op:'O1', p:[0.5, 0.5], q:[1.5, 4.5] },
+      { op:'O4', p:[1.5, 4.5], l:H(0.5) },
+      { op:'O4', p:[0.5, 0.5], l:LN(0.707106781187, 0.707106781187, -4.24264068712) },
+      { op:'O4', p:[5.5, 0.5], l:LN(-0.970142500145, 0.242535625036, 0.363803437554) }
+    ]
+  },
+  {
+    id: 'l43', ch: 3, axiom: 'O2', name: "Haga 定理：5/8 与 1/8",
+    task: "在纸的左右两条边上各作出一个点：左边 <b>x=0</b> 上高度 <b>3.75</b>（即 5/8·6），右边 <b>x=6</b> 上高度 <b>0.75</b>（1/8·6）。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0, 0], ['M', 3, 6]],
+    goal: G.and(G.point(0, 3.75), G.point(6, 0.75)), optimal: 1,
+    hints: ["把 A(0,0) 折到 M(3,6)：折痕是 AM 的垂直平分线。","折痕方程 x+2y=7.5。","取 x=0 得 y=3.75=5/8·6；取 x=6 得 y=0.75=1/8·6。两个点都要出现。"],
+    solution: [
+      { op:'O2', p:[0, 0], q:[3, 6] }
+    ]
+  },
+  {
+    id: 'l44', ch: 3, axiom: 'O2×2', name: "1/2 与 3/4",
+    task: "在底边 <b>y=0</b> 上作出横坐标为 <b>3</b> 与 <b>4.5</b> 的两个点，也就是 1/2 与 3/4 处。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0, 0], ['B', 6, 0]],
+    goal: G.and(G.point(3, 0), G.point(4.5, 0)), optimal: 2,
+    hints: ["把 A 折到 B：折痕 x=3，与底边交于 (3,0)。","把 (3,0) 折到 B：折痕 x=4.5，即 3/4 处。"],
+    solution: [
+      { op:'O2', p:[0, 0], q:[6, 0] },
+      { op:'O2', p:[3, 0], q:[6, 0] }
+    ]
+  },
+  {
+    id: 'l45', ch: 3, axiom: 'O6+O2', name: "1/6 点",
+    task: "在直线 <b>mid</b>（过 mid₁、mid₂，y=3）上作出横坐标为 <b>1</b> 的点（底边长 6 的 1/6 处）。",
+    paper: { w: 6, h: 6 },
+    points: [['C', 6, 6], ['M', 3, 0], ['mid₁', 0, 3], ['mid₂', 6, 3]],
+    goal: G.point(1, 3), optimal: 3,
+    hints: ["过 mid₁、mid₂ 折一次（O1），把水平线 y=3 折出来（直线 mid）。","双落线：C=(6,6) → 底边 y=0，M=(3,0) → 中线 y=3。","M 落在 (2,3)，横坐标正好是 6 的 1/3，中线要先折出来。","把 (0,3) 折到 (2,3)：折痕 x=1，与中线交于 (1,3)。"],
+    solution: [
+      { op:'O1', p:[0, 3], q:[6, 3] },
+      { op:'O6', a:{ p:[6, 6], l:H(0) }, b:{ p:[3, 0], l:H(3) }, k:1 },
+      { op:'O2', p:[0, 3], q:[2, 3] }
+    ]
+  },
+  {
+    id: 'l25', ch: 4, axiom: 'O3×2', name: "挑战：一折不浪费",
+    task: "作出两条折痕：一条与 <b>OA</b> 成 <b>45°</b>，一条与 OA 成 <b>22.5°</b>，两条都在直角 ∠AOB 内部，且总共只用两次折叠。",
+    paper: { w: 6, h: 6 },
+    points: [['O', 0, 0], ['A', 6, 0], ['B', 0, 6]],
+    goal: G.and(G.line(LN(0.707106781187, -0.707106781187, 0)), G.line(LN(-0.382683432365, 0.923879532511, 0))), optimal: 2,
+    hints: ["第一次平分 90° 得 45°。","第二次平分 45° 得 22.5°。两条都必须在纸上。"],
+    solution: [
+      { op:'O3', l:H(0), m:V(0), k:0 },
+      { op:'O3', l:H(0), m:LN(0.707106781187, -0.707106781187, 0), k:0 }
+    ]
+  },
+  {
+    id: 'l26', ch: 4, axiom: 'O2+O4', name: "挑战：正方形与中心",
+    task: "以 <b>AB</b> 为一边作正方形：作出过 A 与过 B 的两条邻边，以及这个正方形的<b>中心</b>。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1, 1], ['B', 4, 1]],
+    goal: G.and(G.line(V(1)), G.line(V(4)), G.point(2.5, 1)), optimal: 4,
+    hints: ["过 A、B 折一次（O1），把水平线 y=1 折出来（直线 AB）。","过 A、过 B 分别作 AB 的垂线。","把 A 折到 B，折痕 x=2.5 与 AB 的交点就是中心。"],
+    solution: [
+      { op:'O1', p:[1, 1], q:[4, 1] },
+      { op:'O4', p:[1, 1], l:H(1) },
+      { op:'O4', p:[4, 1], l:H(1) },
+      { op:'O2', p:[1, 1], q:[4, 1] }
+    ]
+  },
+  {
+    id: 'l27', ch: 4, axiom: 'O2×2+O3×2', name: "挑战：外心与内心",
+    task: "同一张图上的两个目标：作出 <b>△ABC</b> 的<b>外心</b>与<b>内心</b>。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0, 0], ['B', 6, 0], ['C', 0, 4]],
+    goal: G.and(G.point(3, 2), G.point(1.394449, 1.394449)), optimal: 5,
+    hints: ["过 B、C 折一次（O1），把那条斜线 折出来（直线 BC）。","外心：斜边 BC 的中点就是外心 (3,2)。","内心：两条角平分线的交点 (1.3944,1.3944)。"],
+    solution: [
+      { op:'O1', p:[6, 0], q:[0, 4] },
+      { op:'O2', p:[6, 0], q:[0, 4] },
+      { op:'O2', p:[0, 0], q:[0, 4] },
+      { op:'O3', l:H(0), m:V(0), k:0 },
+      { op:'O3', l:H(0), m:LN(0.554700196225, 0.832050294338, -3.32820117735), k:1 }
+    ]
+  },
+  {
+    id: 'l28', ch: 4, axiom: 'O1+O2+O4', name: "挑战：欧拉线",
+    task: "作出 <b>△ABC</b> 的<b>欧拉线</b>：外心、重心、垂心这三点所共的那条直线。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0.5, 0.5], ['B', 5.5, 0.5], ['C', 1.5, 4.5]],
+    goal: G.line(LN(0.316227766017, -0.948683298051, 0.948683298051)), optimal: 7,
+    hints: ["过 A、B 折一次（O1），把水平线 y=0.5 折出来（直线 AB）。","过 B、C 折一次（O1），把那条斜线 折出来（直线 BC）。","垂心：(1.5,1.5) —— 两条高。","外心：(3,2) —— 两条垂直平分线。","最后用 O1 连接这两点，斜率 1/3。"],
+    solution: [
+      { op:'O1', p:[0.5, 0.5], q:[5.5, 0.5] },
+      { op:'O1', p:[5.5, 0.5], q:[1.5, 4.5] },
+      { op:'O4', p:[1.5, 4.5], l:H(0.5) },
+      { op:'O4', p:[0.5, 0.5], l:LN(0.707106781187, 0.707106781187, -4.24264068712) },
+      { op:'O2', p:[0.5, 0.5], q:[5.5, 0.5] },
+      { op:'O2', p:[0.5, 0.5], q:[1.5, 4.5] },
+      { op:'O1', p:[1.5, 1.5], q:[3, 2] }
+    ]
+  },
+  {
+    id: 'l50', ch: 4, axiom: 'O1+O2+O6', name: "挑战：自建辅助线",
+    task: "只给 <b>O、A、B、E</b> 四个点（∠AOB=60°，E 在 O 正上方 2 处），两边与辅助线都要自己折出来。<br>把 ∠AOB 三等分，作出与 <b>OA</b> 成 <b>40°</b> 的直线。",
+    paper: { w: 6, h: 6 },
+    points: [['O', 0, 0], ['A', 6, 0], ['B', 3, 5.19615242271], ['E', 0, 2]],
+    goal: G.line(LN(0.642787609687, -0.766044443119, 0)), optimal: 4,
+    hints: ["先折 OA、OB 两条边（O1）。","E=(0,2) 在过 O 的竖直线上。把 E 折到 O：折痕 y=1，正好是距 OA 为 1、与 OA 平行的那条 L1。","双落线：E → OB，O → L1。三条候选折痕里，把 L1 映成过 O 的 40° 线的那一条。"],
+    solution: [
+      { op:'O1', p:[0, 0], q:[6, 0] },
+      { op:'O1', p:[0, 0], q:[3, 5.19615242271] },
+      { op:'O2', p:[0, 2], q:[0, 0] },
+      { op:'O6', a:{ p:[0, 2], l:LN(0.866025403784, -0.5, 0) }, b:{ p:[0, 0], l:H(1) }, k:0 }
+    ]
+  },
+  {
+    id: 'l51', ch: 4, axiom: 'O2×2', name: "挑战：作纸心",
+    task: "作出这张正方形纸的中心。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 0, 0], ['B', 6, 0], ['C', 6, 6], ['D', 0, 6]],
+    goal: G.point(3, 3), optimal: 2,
+    hints: ["把 A 折到 C：折痕 x+y=6。","把 B 折到 D：折痕 x=y。两线交于 (3,3)。"],
+    solution: [
+      { op:'O2', p:[0, 0], q:[6, 6] },
+      { op:'O2', p:[6, 0], q:[0, 6] }
+    ]
+  },
+  {
+    id: 'l30', ch: 5, axiom: 'O6', name: "抛物线机器：∛2",
+    task: "目标：折痕的斜率等于 <b>x³−2=0</b> 的正根 <b>∛2≈1.2599</b>。<br>作出 <b>P</b> 落在直线 <b>a</b>（过 a₁、a₂）上的那个点，高度约 <b>1.4126</b>。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 2, 3], ['Q', 3, 3.5], ['a₁', 4, 0], ['a₂', 4, 6], ['b₁', 0, 2.5], ['b₂', 6, 2.5]],
+    goal: G.point(4, 1.412599), optimal: 3,
+    hints: ["过 a₁、a₂ 折一次（O1），把竖直线 x=4 折出来（直线 a）。","过 b₁、b₂ 折一次（O1），把水平线 y=2.5 折出来（直线 b）。","P=(2,3) 到 x=4 的距离是 2：以 P 为焦点、x=4 为准线的抛物线，顶点在 (3,3)。","Q=(3,3.5) 到 y=2.5 的距离是 1：第二条抛物线。","双落线：P → x=4，Q → y=2.5。折痕的斜率就是 ∛2≈1.2599。","P 的落点在 (4, 3−∛4) ≈ (4, 1.4126)：高度差 2/∛2 就是 ∛4。"],
+    solution: [
+      { op:'O1', p:[4, 0], q:[4, 6] },
+      { op:'O1', p:[0, 2.5], q:[6, 2.5] },
+      { op:'O6', a:{ p:[2, 3], l:V(4) }, b:{ p:[3, 3.5], l:H(2.5) }, k:0 }
+    ]
+  },
+  {
+    id: 'l31', ch: 5, axiom: 'O6', name: "抛物线机器：∛3",
+    task: "目标：折痕的斜率等于 <b>x³−3=0</b> 的正根 <b>∛3≈1.4422</b>。<br>作出 <b>P</b> 落在直线 <b>a</b>（过 a₁、a₂）上的那个点，高度约 <b>0.9199</b>。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 1.5, 3], ['Q', 3, 3.5], ['a₁', 4.5, 0], ['a₂', 4.5, 6], ['b₁', 0, 2.5], ['b₂', 6, 2.5]],
+    goal: G.point(4.5, 0.919916), optimal: 3,
+    hints: ["过 a₁、a₂ 折一次（O1），把竖直线 x=4.5 折出来（直线 a）。","过 b₁、b₂ 折一次（O1），把水平线 y=2.5 折出来（直线 b）。","P=(1.5,3)，准线 x=4.5，焦距 3。","Q=(3,3.5)，准线 y=2.5，焦距 1。","双落线之后折痕斜率 = ∛3 ≈ 1.4422，P 落在 (4.5, 0.920)。"],
+    solution: [
+      { op:'O1', p:[4.5, 0], q:[4.5, 6] },
+      { op:'O1', p:[0, 2.5], q:[6, 2.5] },
+      { op:'O6', a:{ p:[1.5, 3], l:V(4.5) }, b:{ p:[3, 3.5], l:H(2.5) }, k:0 }
+    ]
+  },
+  {
+    id: 'l32', ch: 5, axiom: 'O6', name: "三根皆实：2cos(π/7)",
+    task: "目标：折痕的斜率等于 <b>2cos(π/7)≈1.8019</b>，即 <b>x³−x²−2x+1=0</b> 最大的根。<br>作出 <b>P</b> 落在直线 <b>a</b>（过 Q、a′）上的那个点，高度约 <b>2.5550</b>。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 4, 2], ['Q', 3, 3.5], ['a′', 3, 0], ['b₁', 0, 2.5], ['b₂', 6, 2.5]],
+    goal: G.point(3, 2.554958), optimal: 3,
+    hints: ["过 Q、a′ 折一次（O1），把竖直线 x=3 折出来（直线 a）。","过 b₁、b₂ 折一次（O1），把水平线 y=2.5 折出来（直线 b）。","P=(4,2) → x=3，Q=(3,3.5) → y=2.5。","三条候选折痕的斜率分别是 1.8019、0.4450、−1.2470。","取最陡的那条，P 落在 (3, 2.555)。"],
+    solution: [
+      { op:'O1', p:[3, 3.5], q:[3, 0] },
+      { op:'O1', p:[0, 2.5], q:[6, 2.5] },
+      { op:'O6', a:{ p:[4, 2], l:V(3) }, b:{ p:[3, 3.5], l:H(2.5) }, k:2 }
+    ]
+  },
+  {
+    id: 'l33', ch: 5, axiom: 'O6', name: "桥到七边形：2cos(2π/7)",
+    task: "目标：折痕的斜率等于 <b>2cos(2π/7)≈1.2470</b>，即 <b>x³+x²−2x−1=0</b> 的正根。<br>作出 <b>P</b> 落在直线 <b>a</b>（过 Q、a′）上的那个点，高度约 <b>1.1981</b>。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 2, 2], ['Q', 3, 3.5], ['a′', 3, 0], ['b₁', 0, 2.5], ['b₂', 6, 2.5]],
+    goal: G.point(3, 1.198062), optimal: 3,
+    hints: ["过 Q、a′ 折一次（O1），把竖直线 x=3 折出来（直线 a）。","过 b₁、b₂ 折一次（O1），把水平线 y=2.5 折出来（直线 b）。","P=(2,2) → x=3，Q=(3,3.5) → y=2.5。","三条候选斜率：1.2470、−0.4450、−1.8019。","正根 2cos(2π/7) 把 P 落在 (3, 1.198)。"],
+    solution: [
+      { op:'O1', p:[3, 3.5], q:[3, 0] },
+      { op:'O1', p:[0, 2.5], q:[6, 2.5] },
+      { op:'O6', a:{ p:[2, 2], l:V(3) }, b:{ p:[3, 3.5], l:H(2.5) }, k:2 }
+    ]
+  },
+  {
+    id: 'l33b', ch: 5, axiom: 'O6', name: "九边形的根：2cos(2π/9)",
+    task: "目标：折痕的斜率等于 <b>2cos(2π/9)≈1.5321</b>，即 <b>x³−3x+1=0</b> 最大的根。<br>作出 <b>P</b> 落在直线 <b>a</b>（过 a₁、a₂）上的那个点，高度约 <b>2.1527</b>。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 3.5, 1.5], ['Q', 3, 3.5], ['a₁', 2.5, 0], ['a₂', 2.5, 6], ['b₁', 0, 2.5], ['b₂', 6, 2.5]],
+    goal: G.point(2.5, 2.152704), optimal: 3,
+    hints: ["过 a₁、a₂ 折一次（O1），把竖直线 x=2.5 折出来（直线 a）。","过 b₁、b₂ 折一次（O1），把水平线 y=2.5 折出来（直线 b）。","P=(3.5,1.5) → x=2.5（焦距 1），Q=(3,3.5) → y=2.5（焦距 1）。","三条候选斜率：1.5321、0.3473、−1.8794。","最陡那条把 P 落在 (2.5, 2.1527)。"],
+    solution: [
+      { op:'O1', p:[2.5, 0], q:[2.5, 6] },
+      { op:'O1', p:[0, 2.5], q:[6, 2.5] },
+      { op:'O6', a:{ p:[3.5, 1.5], l:V(2.5) }, b:{ p:[3, 3.5], l:H(2.5) }, k:2 }
+    ]
+  },
+  {
+    id: 'l34', ch: 5, axiom: 'O6', name: "正七边形：肩高",
+    task: "正七边形以 <b>(3,3)</b> 为心、半径 3，头顶在 (3,6)。<br>作出它的<b>肩</b>：肩的高度是 <b>3+3cos(2π/7)≈4.8705</b>，作出 (3, 4.8705) 这个点。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1.5, 3], ['B', 3.75, 1.5], ['a₁', 3, 0], ['a₂', 3, 6], ['b′', 6, 3]],
+    goal: G.point(3, 4.87046940558), optimal: 3,
+    hints: ["过 a₁、a₂ 折一次（O1），把竖直线 x=3 折出来（直线 a）。","过 A、b′ 折一次（O1），把水平线 y=3 折出来（直线 b）。","A=(1.5,3) 在横中线 b 上，离竖中线 a 还差 1.5；B=(3.75,1.5) 离横中线 b 差 1.5。","双落线会给出 3 条候选折痕，A 的落点分别在 y=4.8705（肩）、2.3324（胯）、0.2971（脚）。","取最高的那条：肩高 = 3+3cos(2π/7)≈4.8705。"],
+    solution: [
+      { op:'O1', p:[3, 0], q:[3, 6] },
+      { op:'O1', p:[1.5, 3], q:[6, 3] },
+      { op:'O6', a:{ p:[1.5, 3], l:V(3) }, b:{ p:[3.75, 1.5], l:H(3) }, k:0 }
+    ]
+  },
+  {
+    id: 'l35', ch: 5, axiom: 'O6+O4', name: "正七边形：肩线",
+    task: "正七边形的两个肩等高，连接它们的弦是水平的。<br>作出这条<b>肩线</b>：高度 <b>3+3cos(2π/7)≈4.8705</b> 的水平线。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1.5, 3], ['B', 3.75, 1.5], ['a₁', 3, 0], ['a₂', 3, 6], ['b′', 6, 3]],
+    goal: G.line(H(4.87046940558)), optimal: 4,
+    hints: ["过 a₁、a₂ 折一次（O1），把竖直线 x=3 折出来（直线 a）。","过 A、b′ 折一次（O1），把水平线 y=3 折出来（直线 b）。","第一步和上一关一样：A → x=3，B → y=3，选最高的候选折痕。","肩高那点落在 (3, 4.8705)。","过它作 x=3 的垂线（O4），得到肩线 y≈4.8705。"],
+    solution: [
+      { op:'O1', p:[3, 0], q:[3, 6] },
+      { op:'O1', p:[1.5, 3], q:[6, 3] },
+      { op:'O6', a:{ p:[1.5, 3], l:V(3) }, b:{ p:[3.75, 1.5], l:H(3) }, k:0 },
+      { op:'O4', p:[3, 4.87046940558], l:V(3) }
+    ]
+  },
+  {
+    id: 'l36', ch: 5, axiom: 'O6+O4+O5', name: "正七边形：两个肩点",
+    task: "作出正七边形<b>左右两个肩点</b>：高度 3+3cos(2π/7)≈4.8705，到中心 (3,3) 的距离为 3。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1.5, 3], ['B', 3.75, 1.5], ['H', 3, 6], ['a′', 3, 0], ['b′', 6, 3]],
+    goal: G.and(G.point(5.3454944474, 4.87046940558), G.point(0.654505552596, 4.87046940558)), optimal: 6,
+    hints: ["过 H、a′ 折一次（O1），把竖直线 x=3 折出来（直线 a）。","过 A、b′ 折一次（O1），把水平线 y=3 折出来（直线 b）。","前两折：A → x=3、B → y=3 得肩高，再过肩高作肩线。","H=(3,6) 在圆上（到中心 C 的距离 3）。","O5：H → 肩线，折痕过 C。两个解分别是右肩 (5.3455, 4.8705) 与左肩 (0.6545, 4.8705)。"],
+    solution: [
+      { op:'O1', p:[3, 6], q:[3, 0] },
+      { op:'O1', p:[1.5, 3], q:[6, 3] },
+      { op:'O6', a:{ p:[1.5, 3], l:V(3) }, b:{ p:[3.75, 1.5], l:H(3) }, k:0 },
+      { op:'O4', p:[3, 4.87046940558], l:V(3) },
+      { op:'O5', p:[3, 6], l:H(4.87046940558), q:[3, 3], k:0 },
+      { op:'O5', p:[3, 6], l:H(4.87046940558), q:[3, 3], k:1 }
+    ]
+  },
+  {
+    id: 'l37', ch: 5, axiom: 'O6+O4+O5+O1', name: "正七边形：中心角 2π/7",
+    task: "过正七边形的中心 <b>(3,3)</b> 作出与头顶方向成 <b>2π/7≈51.43°</b> 的直线，也就是到右肩的那条射线。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1.5, 3], ['B', 3.75, 1.5], ['H', 3, 6], ['a′', 3, 0], ['b′', 6, 3]],
+    goal: G.line(LN(0.623489801859, -0.781831482468, 0.475025041828)), optimal: 5,
+    hints: ["过 H、a′ 折一次（O1），把竖直线 x=3 折出来（直线 a）。","过 A、b′ 折一次（O1），把水平线 y=3 折出来（直线 b）。","前两折：肩高 → 肩线。","第三折是 O5：H → 肩线，折痕过 C。","这一折把竖中线同时反射成 CR——中心角 2π/7 不用第四折。"],
+    solution: [
+      { op:'O1', p:[3, 6], q:[3, 0] },
+      { op:'O1', p:[1.5, 3], q:[6, 3] },
+      { op:'O6', a:{ p:[1.5, 3], l:V(3) }, b:{ p:[3.75, 1.5], l:H(3) }, k:0 },
+      { op:'O4', p:[3, 4.87046940558], l:V(3) },
+      { op:'O5', p:[3, 6], l:H(4.87046940558), q:[3, 3], k:0 }
+    ]
+  },
+  {
+    id: 'l46', ch: 5, axiom: 'O6', name: "塑料数：x³−x−1",
+    task: "目标：折痕的斜率等于<b>塑料数 1.3247</b>，即 <b>x³−x−1=0</b> 的正根。<br>作出 <b>P</b> 落在直线 <b>a</b>（过 a₁、a₂）上的那个点，高度约 <b>1.7451</b>。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 2.5, 2.5], ['Q', 3, 3.5], ['a₁', 3.5, 0], ['a₂', 3.5, 6], ['b′', 6, 2.5]],
+    goal: G.point(3.5, 1.745122), optimal: 3,
+    hints: ["过 a₁、a₂ 折一次（O1），把竖直线 x=3.5 折出来（直线 a）。","过 P、b′ 折一次（O1），把水平线 y=2.5 折出来（直线 b）。","P=(2.5,2.5) 到 a(x=3.5) 的距离是 1；Q=(3,3.5) 到 b(y=2.5) 的距离也是 1。","双落线：P → a，Q → b，折痕的斜率就是塑料数 1.3247。","P 落在 (3.5, 1.7451)。"],
+    solution: [
+      { op:'O1', p:[3.5, 0], q:[3.5, 6] },
+      { op:'O1', p:[2.5, 2.5], q:[6, 2.5] },
+      { op:'O6', a:{ p:[2.5, 2.5], l:V(3.5) }, b:{ p:[3, 3.5], l:H(2.5) }, k:0 }
+    ]
+  },
+  {
+    id: 'l47', ch: 5, axiom: 'O6', name: "单实根：x³−2x−5",
+    task: "目标：折痕的斜率等于 <b>x³−2x−5=0</b> 唯一的实根 <b>2.0946</b>（另两根是共轭复数）。<br>作出 <b>P</b> 落在直线 <b>a</b>（过 a₁、a₂）上的那个点，高度约 <b>0.6129</b>。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 0.5, 3], ['Q', 3, 4.5], ['a₁', 5.5, 0], ['a₂', 5.5, 6], ['b₁', 0, 3.5], ['b₂', 6, 3.5]],
+    goal: G.point(5.5, 0.612854), optimal: 3,
+    hints: ["过 a₁、a₂ 折一次（O1），把竖直线 x=5.5 折出来（直线 a）。","过 b₁、b₂ 折一次（O1），把水平线 y=3.5 折出来（直线 b）。","P=(0.5,3) 到 a(x=5.5) 的距离是 5（对应常数项 −5）。","Q=(3,4.5) 到 b(y=3.5) 的距离是 1。","折痕斜率 2.0946，P 落在 (5.5, 0.6129)。"],
+    solution: [
+      { op:'O1', p:[5.5, 0], q:[5.5, 6] },
+      { op:'O1', p:[0, 3.5], q:[6, 3.5] },
+      { op:'O6', a:{ p:[0.5, 3], l:V(5.5) }, b:{ p:[3, 4.5], l:H(3.5) }, k:0 }
+    ]
+  },
+  {
+    id: 'l48', ch: 5, axiom: 'O6', name: "三根皆实：x³−4x+1",
+    task: "目标：折痕的斜率等于 <b>x³−4x+1=0</b> 三个实根中最大的 <b>1.8608</b>。<br>作出 <b>P</b> 落在直线 <b>a</b>（过 a₁、a₂）上的那个点，高度约 <b>1.5374</b>。",
+    paper: { w: 6, h: 6 },
+    points: [['P', 3.5, 1], ['Q', 3, 3.5], ['a₁', 2.5, 0], ['a₂', 2.5, 6], ['b₁', 0, 2.5], ['b₂', 6, 2.5]],
+    goal: G.point(2.5, 1.537402), optimal: 3,
+    hints: ["过 a₁、a₂ 折一次（O1），把竖直线 x=2.5 折出来（直线 a）。","过 b₁、b₂ 折一次（O1），把水平线 y=2.5 折出来（直线 b）。","P=(3.5,1) → l1(x=2.5)，Q=(3,3.5) → l2(y=2.5)。","三条候选斜率：−2.1149、0.2541、1.8608。","最陡的那条把 P 落在 (2.5, 1.5374)。"],
+    solution: [
+      { op:'O1', p:[2.5, 0], q:[2.5, 6] },
+      { op:'O1', p:[0, 2.5], q:[6, 2.5] },
+      { op:'O6', a:{ p:[3.5, 1], l:V(2.5) }, b:{ p:[3, 3.5], l:H(2.5) }, k:2 }
+    ]
+  },
+  {
+    id: 'l49', ch: 5, axiom: 'O6', name: "正七边形：胯高",
+    task: "作出正七边形的<b>胯</b>点：高度 <b>3+3cos(4π/7)≈2.3324</b>，即点 (3, 2.3324)。",
+    paper: { w: 6, h: 6 },
+    points: [['A', 1.5, 3], ['B', 3.75, 1.5], ['a₁', 3, 0], ['a₂', 3, 6], ['b′', 6, 3]],
+    goal: G.point(3, 2.33243719813), optimal: 3,
+    hints: ["过 a₁、a₂ 折一次（O1），把竖直线 x=3 折出来（直线 a）。","过 A、b′ 折一次（O1），把水平线 y=3 折出来（直线 b）。","A=(1.5,3) 折到 x=3，B=(3.75,1.5) 折到 y=3。","A 的三个落点：4.8705、2.3324、0.2971。","取中间的 (3, 2.3324)：这是七边形的胯，与肩一起把圆分成七段。"],
+    solution: [
+      { op:'O1', p:[3, 0], q:[3, 6] },
+      { op:'O1', p:[1.5, 3], q:[6, 3] },
+      { op:'O6', a:{ p:[1.5, 3], l:V(3) }, b:{ p:[3.75, 1.5], l:H(3) }, k:2 }
+    ]
+  }
+];
+/*LEVELS_END*/
+
+/* ================= 应用层 ================= */
+const $ = s => document.querySelector(s);
+const svg = $('#board'), stageEl = $('#stage');
+const view = { W:0, H:0, scale:80, left:0, top:0 };
+
+const state = {
+  levelId:'l01', level:null,
+  folds:[],           // [{step, crease}]
+  mode:null, sel:[], cands:null, candStep:null,
+  solved:false, hintIdx:0, revealed:false
+};
+
+const TOOLS = [
+  { id:'O1', name:'过两点',     seq:['pt','pt'],            tip:'点两个点' },
+  { id:'O2', name:'点→点',      seq:['pt','pt'],            tip:'点两个点（折痕=垂直平分线）' },
+  { id:'O3', name:'线→线',      seq:['line','line'],        tip:'点两条线（得到角平分线）' },
+  { id:'O4', name:'线→自身',    seq:['pt','line'],          tip:'点一个点，再点一条线（垂线）' },
+  { id:'O5', name:'点→线',      seq:['pt','line','pt'],     tip:'点 P → 线 l → 折痕经过的点 Q' },
+  { id:'O6', name:'双落线',     seq:['pt','line','pt','line'], tip:'点 P→线 l，点 Q→线 m' },
+  { id:'O7', name:'点→线(正交)', seq:['pt','line','line'],   tip:'点 P→线 l，把线 m 折到自身' }
+];
+const toolOf = id => TOOLS.find(t => t.id === id);
+
+// 七公理的形式陈述：题面下方作为边注给出
+const AXIOMS = {
+  O1: ['过两点', '给定点 P、Q，作唯一折痕同时过这两点。'],
+  O2: ['点折到点', '给定 P、Q，作折痕使 P 落在 Q 上；折痕是 PQ 的垂直平分线。'],
+  O3: ['线折到线', '给定直线 l、m，作折痕使 l 落在 m 上；两条折痕即两角的平分线。'],
+  O4: ['线折到自身', '给定 P 与 l，作过 P 的折痕使 l 落在自身；折痕垂直于 l。'],
+  O5: ['点折到线', '给定 P、Q 与 l，作过 Q 的折痕使 P 落在 l 上；等价于直线与圆求交，0/1/2 解。'],
+  O6: ['双落线', '给定 P、Q 与 l、m，作折痕使 P 落在 l 上且 Q 落在 m 上；一般 0–3 解，等价于三次方程。'],
+  O7: ['点折到线、线折到自身', '给定 P 与 l、m，作折痕使 P 落在 l 上且 m 落在自身；解唯一，折痕垂直于 m。']
+};
+const axKey = s => (String(s).match(/O[1-7]/) || ['O1'])[0];
+const ROMAN = ['I','II','III','IV','V','VI','VII','VIII'];
+
+/* ---------- 视图 ---------- */
+function computeView(){
+  const L = state.level; if(!L) return;
+  const W = stageEl.clientWidth || 900, H = stageEl.clientHeight || 600;
+  const pad = 26;
+  const sc = Math.min((W-pad*2)/L.paper.w, (H-pad*2)/L.paper.h);
+  view.W = W; view.H = H; view.scale = sc;
+  view.left = (W - L.paper.w*sc)/2;
+  view.top  = (H - L.paper.h*sc)/2;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+}
+const SCR = p => [view.left + p.x*view.scale, view.top + (state.level.paper.h - p.y)*view.scale];
+function toMath(e){
+  const b = svg.getBoundingClientRect();
+  return {
+    x: (e.clientX - b.left - view.left)/view.scale,
+    y: state.level.paper.h - (e.clientY - b.top - view.top)/view.scale
+  };
+}
+
+/* ---------- 场景推导（与验证器同一套规则） ---------- */
+function buildScene(){
+  const L = state.level, w = L.paper.w, h = L.paper.h;
+  const lines = [];
+  (L.lines || []).forEach(l => lines.push({ a:l.a, b:l.b, c:l.c, given:true }));
+  const edges = [
+    { a:0,b:1,c:0, edge:true, id:'底边' }, { a:0,b:1,c:-h, edge:true, id:'顶边' },
+    { a:1,b:0,c:0, edge:true, id:'左边' }, { a:1,b:0,c:-w, edge:true, id:'右边' }
+  ];
+  lines.push(...edges);
+
+  const lands = [], creases = [], reflected = [];
+  state.folds.forEach((f, i) => {
+    // 只把「纸面上真实存在的线」（边、给定线、折痕）映过去；
+    // 镜像的镜像不再继续派生，否则折痕数一多就 2^n 爆炸
+    const before = lines.filter(m => !m.reflected);
+    const creaseObj = { a:f.crease.a, b:f.crease.b, c:f.crease.c, crease:true, last:(i===state.folds.length-1) };
+    lines.push(creaseObj); creases.push(creaseObj);
+    for (const m of before){
+      const r = reflectLine(f.crease, m);
+      if (r){ const o = { a:r.a, b:r.b, c:r.c, reflected:true, last:(i===state.folds.length-1) }; lines.push(o); reflected.push(o); }
+    }
+    state.pts.forEach(p => {
+      const q = reflect(f.crease, p);
+      if (inPaper(q, w, h, .4)) lands.push(q);
+    });
+  });
+
+  // 交点：只有「折痕 / 纸边」参与的才算是纸上真实存在的点；
+  // 两条镜像线的交点是虚像，不画、也不参与判定（否则纸面会布满噪声点）
+  const map = new Map();
+  const key = (x, y) => Math.round(x * 1e5) + ',' + Math.round(y * 1e5);
+  const corner = X => [[0,0],[w,0],[0,h],[w,h]].some(c => Math.hypot(c[0]-X.x, c[1]-X.y) < 1e-6);
+  const keep = (X, real) => {
+    if (!X || !inPaper(X, w, h, .35) || corner(X)) return;
+    const k = key(X.x, X.y);
+    const o = map.get(k);
+    if (o){ if (real) o.real = true; return; }
+    map.set(k, { x: X.x, y: X.y, real: !!real });
+  };
+  const solid = l => l.crease || l.edge || l.given;
+  for (let i=0;i<lines.length;i++) for (let j=i+1;j<lines.length;j++){
+    const a = lines[i], b = lines[j];
+    const real = solid(a) && solid(b) && !a.reflected && !b.reflected;
+    keep(interLines(a, b), real);
+  }
+  lands.forEach(q => keep(q, true));
+  const dp = [...map.values()].filter(p => p.real);
+  return { lines, edges, creases, reflected, lands, dp };
+}
+function inPaper(p, w, h, m){ return p.x >= -m && p.x <= w+m && p.y >= -m && p.y <= h+m; }
+
+let SCENE = null;
+function scene(){ if(!SCENE) SCENE = buildScene(); return SCENE; }
+
+/* ---------- 目标判定 ---------- */
+function checkGoal(){
+  const g = state.level.goal; if(!g) return false;
+  const s = scene();
+  const one = gg => {
+    if (gg.type === 'point') return s.dp.some(p => Math.hypot(p.x-gg.at[0], p.y-gg.at[1]) < 1e-3);
+    if (gg.type === 'line')  return s.lines.some(l => sameLine(l, gg.line));
+    if (gg.type === 'and')   return gg.of.every(one);
+    if (gg.type === 'or')    return gg.of.some(one);
+    return false;
+  };
+  return one(g);
+}
+
+/* ---------- 关卡 ---------- */
+function initLevel(id){
+  const L = LEVELS.find(l => l.id === id); if(!L) return;
+  state.levelId = id; state.level = L;
+  state.folds = []; state.mode = null; state.sel = [];
+  state.cands = null; state.candStep = null;
+  state.solved = false; state.hintIdx = 0; state.revealed = false;
+  SCENE = null;
+  state.pts = L.points.map(([pid,x,y]) => ({ id:pid, x, y }));
+
+  const idx = LEVELS.indexOf(L);
+  const ord = LEVELS.filter(x => x.ch === L.ch).indexOf(L) + 1;
+  $('#lvid').textContent = ROMAN[L.ch] + '.' + ord;
+  $('#axid').textContent = L.axiom;
+  $('#chname').textContent = CHAPTERS[L.ch].name.replace(/^第.+?章 · /, '');
+  $('#title').textContent = L.name;
+  $('#task').innerHTML = L.task;
+  const ax = AXIOMS[axKey(L.axiom)];
+  $('#axnote').innerHTML = ax ? `<b>${axKey(L.axiom)}</b>${ax[0]} —— ${ax[1]}` : '';
+  hideWin(); closeHint(); renderSide(); renderDock();
+  requestAnimationFrame(() => { computeView(); render(); updateHud(); });
+}
+
+/* ---------- 折叠执行 ---------- */
+function setMode(id){
+  state.mode = (state.mode === id) ? null : id;
+  state.sel = []; state.cands = null; state.candStep = null;
+  renderDock(); renderBuildbar(); render();
+}
+function clickObject(obj){
+  const t = toolOf(state.mode); if(!t) return;
+  const need = t.seq[state.sel.length];
+  if (obj.kind !== need){ toast(need === 'pt' ? '这一步需要选一个点' : '这一步需要选一条线'); return; }
+  // 同一物体不能重复选（线→线 / 点→点）
+  if (state.sel.some(o => o.kind==='line' && obj.kind==='line' && sameLine(o.line, obj.line))){ toast('不能选同一条线'); return; }
+  if (state.sel.some(o => o.kind==='pt' && obj.kind==='pt' && Math.hypot(o.x-obj.x,o.y-obj.y)<1e-6)){ toast('不能选同一个点'); return; }
+  state.sel.push(obj);
+  renderBuildbar(); render();
+  if (state.sel.length === t.seq.length) commitStep();
+}
+
+function buildStep(){
+  const [a,b,c,d] = state.sel;
+  switch(state.mode){
+    case 'O1': return { op:'O1', p:[a.x,a.y], q:[b.x,b.y] };
+    case 'O2': return { op:'O2', p:[a.x,a.y], q:[b.x,b.y] };
+    case 'O3': return { op:'O3', l:a.line, m:b.line };
+    case 'O4': return { op:'O4', p:[a.x,a.y], l:b.line };
+    case 'O5': return { op:'O5', p:[a.x,a.y], l:b.line, q:[c.x,c.y] };
+    case 'O6': return { op:'O6', a:{ p:[a.x,a.y], l:b.line }, b:{ p:[c.x,c.y], l:d.line } };
+    case 'O7': return { op:'O7', p:[a.x,a.y], l:b.line, m:c.line };
+  }
+}
+function commitStep(){
+  const step = buildStep();
+  const cands = resolveOp(step);
+  if (!cands.length){ toast('这组对齐无法折叠（无解）'); clearSel(); return; }
+  if (cands.length === 1){ applyFold(step, cands[0]); return; }
+  state.cands = cands; state.candStep = step;
+  renderBuildbar(); render();
+  toast(`有 ${cands.length} 条候选折痕，点其中一条`);
+}
+function applyFold(step, crease){
+  state.folds.push({ step, crease });
+  const was = state.solved;
+  clearSel();
+  SCENE = null;
+  state.solved = checkGoal();
+  render(); updateHud();
+  if (state.solved && !was) onSolved();
+}
+function clearSel(){ state.mode = null; state.sel = []; state.cands = null; state.candStep = null; renderDock(); renderBuildbar(); }
+function undo(){
+  if (!state.folds.length) return;
+  state.folds.pop(); SCENE = null; hideWin();
+  state.solved = checkGoal();
+  render(); updateHud();
+}
+function reset(){ initLevel(state.levelId); }
+
+/* ---------- 渲染 ---------- */
+function clipInfinite(p, d, rect){
+  let t0 = -1e9, t1 = 1e9;
+  const axis = (p0, dv, mn, mx) => {
+    if (Math.abs(dv) < 1e-12) return p0 >= mn-1e-9 && p0 <= mx+1e-9;
+    let ta = (mn-p0)/dv, tb = (mx-p0)/dv;
+    if (ta > tb){ const t = ta; ta = tb; tb = t; }
+    t0 = Math.max(t0, ta); t1 = Math.min(t1, tb);
+    return t0 <= t1;
+  };
+  if (!axis(p.x, d.x, rect.x0, rect.x1)) return null;
+  if (!axis(p.y, d.y, rect.y0, rect.y1)) return null;
+  return [{ x:p.x+d.x*t0, y:p.y+d.y*t0 }, { x:p.x+d.x*t1, y:p.y+d.y*t1 }];
+}
+function render(){
+  const L = state.level; if(!L) return;
+  const w = L.paper.w, h = L.paper.h, s = scene(), out = [];
+  const P0 = SCR({x:0,y:0}), P1 = SCR({x:w,y:h});
+  out.push(`<rect class="paperrect" x="${P0[0]}" y="${P1[1]}" width="${P1[0]-P0[0]}" height="${P0[1]-P1[1]}"/>`);
+
+  const seg = l => clipInfinite(project(l,{x:0,y:0}), {x:l.b,y:-l.a}, {x0:0,y0:0,x1:w,y1:h});
+  const draw = (l, cls, extra='') => {
+    const g = seg(l); if(!g) return '';
+    const A = SCR(g[0]), B = SCR(g[1]);
+    const len = Math.hypot(B[0]-A[0], B[1]-A[1]);
+    return `<line class="${cls}" x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}"${extra} data-len="${len.toFixed(1)}"/>`;
+  };
+
+  s.lines.filter(l => l.given).forEach(l => out.push(draw(l, 'givenline')));
+  s.reflected.filter(l => l.last).forEach(l => out.push(draw(l, 'refl')));
+  // 目标线：极淡的虚线提示（不是给定线，只是告诉你折成哪样）
+  const ghost = g => {
+    if (!g) return;
+    if (g.type === 'line') out.push(draw(g.line, 'ghost'));
+    else if (g.type === 'and') g.of.forEach(ghost);
+  };
+  ghost(L.goal);
+  s.creases.forEach(l => {
+    if (l.last && !state.solved) out.push(draw(l, 'crease new', ` style="--len:900;stroke-dasharray:900;stroke-dashoffset:900"`));
+    else out.push(draw(l, 'crease'));
+  });
+
+  // 候选折痕
+  if (state.cands){
+    state.cands.forEach((c, i) => {
+      const g = seg(c); if(!g) return;
+      const A = SCR(g[0]), B = SCR(g[1]);
+      out.push(`<line class="cand" x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" data-cand="${i}"/>`);
+    });
+  }
+  // 参考折法
+  if (state.revealed && L.solution){
+    solutionCreases(L).forEach(c => {
+      const g = seg(c); if(!g) return;
+      const A = SCR(g[0]), B = SCR(g[1]);
+      out.push(`<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" stroke="rgba(214,142,16,.95)" stroke-width="1.9" stroke-dasharray="6 5"/>`);
+    });
+  }
+
+  // 派生交点
+  const given = state.pts;
+  s.dp.forEach(d => {
+    if (given.some(g => Math.hypot(g.x-d.x, g.y-d.y) < 1e-6)) return;
+    const c = SCR(d);
+    out.push(`<circle class="dpt" cx="${c[0]}" cy="${c[1]}" r="3.4"/>`);
+  });
+
+  // 给定点
+  state.pts.forEach(p => {
+    const c = SCR(p);
+    out.push(`<circle class="gpt" cx="${c[0]}" cy="${c[1]}" r="4.6"/>`);
+    out.push(`<text class="glabel" x="${c[0]+9}" y="${c[1]-9}">${p.id}</text>`);
+  });
+
+  // 目标点提示
+  const markPoints = g => {
+    if (!g) return;
+    if (g.type === 'point'){
+      const t = SCR({x:g.at[0], y:g.at[1]});
+      out.push(`<circle class="targetp" cx="${t[0]}" cy="${t[1]}" r="6"/>`);
+      if (state.solved) out.push(`<circle class="pulse" cx="${t[0]}" cy="${t[1]}" r="4"/>`);
+    } else if (g.type === 'and' || g.type === 'or') g.of.forEach(markPoints);
+  };
+  markPoints(L.goal);
+
+  // 选中
+  state.sel.forEach(o => {
+    if (o.kind === 'pt'){ const c = SCR(o); out.push(`<circle class="selpoint" cx="${c[0]}" cy="${c[1]}" r="8"/>`); }
+    else { const g = seg(o.line); if (g) out.push(`<line class="selline" x1="${SCR(g[0])[0]}" y1="${SCR(g[0])[1]}" x2="${SCR(g[1])[0]}" y2="${SCR(g[1])[1]}"/>`); }
+  });
+
+  svg.innerHTML = out.join('');
+}
+
+function solutionCreases(L){
+  const out = [];
+  L.solution.forEach(st => {
+    const c = pickCrease(st);
+    if (c) out.push(c);
+  });
+  return out;
+}
+
+/* ---------- 命中测试 ---------- */
+function hitTest(m){
+  const s = scene(), R = 16/view.scale;
+  let best = null, bd = 1e9;
+  const pts = state.pts.map(p => ({ kind:'pt', x:p.x, y:p.y, label:p.id }))
+    .concat(s.dp.map(d => ({ kind:'pt', x:d.x, y:d.y, label:'' })));
+  for (const p of pts){
+    const d = Math.hypot(p.x-m.x, p.y-m.y);
+    if (d < R && d < bd){ best = p; bd = d; }
+  }
+  if (best) return best;
+  let bl = null, bld = R*0.85;
+  for (const l of s.lines){
+    const d = Math.abs(distPL(l, m));
+    if (d < bld){ bl = { kind:'line', line:l }; bld = d; }
+  }
+  return bl;
+}
+function hitCand(m){
+  if (!state.cands) return -1;
+  const R = 14/view.scale;
+  let bi = -1, bd = R;
+  state.cands.forEach((c, i) => {
+    const d = Math.abs(distPL(c, m));
+    if (d < bd){ bi = i; bd = d; }
+  });
+  return bi;
+}
+
+svg.addEventListener('pointermove', e => {
+  if (!state.mode && !state.cands) return;
+  const m = toMath(e);
+  if (state.cands){ svg.style.cursor = hitCand(m) >= 0 ? 'pointer' : 'crosshair'; return; }
+  svg.style.cursor = hitTest(m) ? 'pointer' : 'crosshair';
+});
+svg.addEventListener('click', e => {
+  if ($('#win').classList.contains('show')) return;
+  const m = toMath(e);
+  if (state.cands){
+    const i = hitCand(m);
+    if (i >= 0){ const step = state.candStep, c = state.cands[i]; state.cands = null; state.candStep = null; applyFold(step, c); }
+    return;
+  }
+  if (!state.mode) return;
+  const hit = hitTest(m);
+  if (hit) clickObject(hit);
+});
+
+/* ---------- HUD ---------- */
+function updateHud(){
+  $('#stepNum').textContent = state.folds.length;
+  $('#stepPill').classList.toggle('ok', state.solved);
+  $('#optNum').textContent = state.level.optimal;
+}
+
+/* ---------- 构建条 ---------- */
+function renderBuildbar(){
+  const el = $('#buildbar');
+  if (!state.mode && !state.cands){ el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  if (state.cands){
+    el.innerHTML = `<span class="act">选一条折痕</span>
+      <span class="slot"><span class="lbl">${state.cands.length} 个解 · 点纸面上的金色虚线</span></span>
+      <button class="cancel">取消</button>`;
+    el.querySelector('.cancel').onclick = clearSel;
+    return;
+  }
+  const t = toolOf(state.mode);
+  const names = state.sel.map(o => o.kind === 'pt' ? (o.label || '点') : '一条线').join(' → ');
+  el.innerHTML = `<span class="act">${t.name}</span>` +
+    (state.sel.length
+      ? `<span class="slot filled"><span class="lbl">已选</span><span class="val">${names}</span></span>`
+      : `<span class="slot"><span class="lbl">${t.tip}</span></span>`) +
+    `<button class="cancel">取消</button>`;
+  el.querySelector('.cancel').onclick = clearSel;
+}
+
+/* ---------- 工具条 ---------- */
+function renderDock(){
+  const el = $('#dockTools'); el.innerHTML = '';
+  TOOLS.forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'tool' + (state.mode === t.id ? ' on' : '');
+    b.title = t.tip;
+    b.innerHTML = `<span class="k">${t.id}</span>${t.name}`;
+    b.onclick = () => setMode(t.id);
+    el.appendChild(b);
+  });
+  const sep = () => { const d = document.createElement('div'); d.className = 'sep'; return d; };
+  el.appendChild(sep());
+  [['撤销', undo], ['重来', reset], ['提示', openHint]].forEach(([label, fn]) => {
+    const b = document.createElement('button');
+    b.className = 'tbtn'; b.textContent = label; b.onclick = fn;
+    el.appendChild(b);
+  });
+}
+
+/* ---------- 通关 ---------- */
+function starsFor(steps, optimal){
+  if (steps <= optimal) return 3;
+  if (steps <= optimal + 1) return 2;
+  return 1;
+}
+function onSolved(){
+  const L = state.level, steps = state.folds.length;
+  const stars = starsFor(steps, L.optimal);
+  saveProg(L.id, stars);
+  setTimeout(() => {
+    $('#winStars').innerHTML = [0,1,2].map(i =>
+      `<i class="${i<stars?'on':''}">${i<stars?'★':'☆'}</i>`).join('');
+    const verdict = steps <= L.optimal ? '与参考解等长' : `比参考解多 ${steps - L.optimal} 折`;
+    $('#winSub').innerHTML = `折痕 <b>${steps}</b> · 参考 <b>${L.optimal}</b> · ${verdict}`;
+    const nx = nextLevelId();
+    $('#winNext').style.display = nx ? '' : 'none';
+    $('#win').classList.add('show');
+    renderSide();
+  }, 520);
+}
+function nextLevelId(){
+  const i = LEVELS.findIndex(l => l.id === state.levelId);
+  return i + 1 < LEVELS.length ? LEVELS[i+1].id : null;
+}
+function hideWin(){ $('#win').classList.remove('show'); }
+
+/* ---------- 侧栏 ---------- */
+function renderSide(){
+  const prog = loadProg();
+  let html = '';
+  CHAPTERS.forEach(c => {
+    const items = LEVELS.filter(l => l.ch === c.id);
+    if (!items.length) return;
+    const short = c.name.replace(/^第.+?章 · /, '');
+    html += `<div class="chap"><div class="chap-t"><i>${ROMAN[c.id]}</i>${short}</div><div class="chap-s">${c.sub}</div>`;
+    items.forEach((l, i) => {
+      const st = (prog[l.id] || {}).stars || 0;
+      html += `<button class="lv${state.levelId===l.id?' on':''}${st?' done':''}" data-id="${l.id}">
+        <span class="n">${String(i+1).padStart(2,'0')}</span><span class="nm">${l.name}</span>
+        <span class="ax">${l.axiom}</span><span class="st">${st?'★'.repeat(st):''}</span></button>`;
+    });
+    html += '</div>';
+  });
+  const el = $('#chapterList'); el.innerHTML = html;
+  el.querySelectorAll('.lv').forEach(b => b.addEventListener('click', () => {
+    initLevel(b.dataset.id); $('#side').classList.remove('show');
+  }));
+}
+function loadProg(){ try { return JSON.parse(localStorage.getItem('origamilab.v2')) || {}; } catch(e){ return {}; } }
+function saveProg(id, stars){
+  const p = loadProg(), o = p[id];
+  if (!o || stars > o.stars) p[id] = { stars };
+  try { localStorage.setItem('origamilab.v2', JSON.stringify(p)); } catch(e){}
+}
+
+/* ---------- 提示 ---------- */
+function openHint(){
+  const L = state.level;
+  if (!L.hints || !L.hints.length){ toast('这关没有提示'); return; }
+  state.hintIdx = Math.min(state.hintIdx + 1, L.hints.length);
+  renderHints();
+  $('#hmSub').textContent = L.task.replace(/<[^>]+>/g,'');
+  $('#scrim').classList.add('show'); $('#hintmodal').classList.add('show');
+}
+function renderHints(){
+  const L = state.level, n = state.hintIdx;
+  let html = '';
+  for (let i=0;i<L.hints.length;i++){
+    if (i < n) html += `<div class="hintitem"><span class="idx">${i+1}</span><span>${L.hints[i]}</span></div>`;
+    else html += `<div class="hintitem lock" data-i="${i}"><span class="idx">?</span><span>点击查看第 ${i+1} 条提示</span></div>`;
+  }
+  $('#hintList').innerHTML = html;
+  $('#hintList').querySelectorAll('.lock').forEach(el => el.onclick = () => {
+    state.hintIdx = Math.max(state.hintIdx, +el.dataset.i + 1); renderHints();
+  });
+}
+function closeHint(){ $('#hintmodal').classList.remove('show'); $('#scrim').classList.remove('show'); }
+$('#btnCloseHint').onclick = closeHint;
+$('#scrim').onclick = closeHint;
+$('#btnReveal').onclick = () => { state.revealed = true; closeHint(); render(); toast('金色虚线是参考折法'); };
+$('#winNext').onclick = () => { const n = nextLevelId(); hideWin(); if (n) initLevel(n); };
+
+let toastT = null;
+function toast(msg){
+  const el = $('#hintbar'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2000);
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ if (state.mode || state.cands) clearSel(); closeHint(); hideWin(); }
+  if ((e.key === 'z' || e.key === 'Z') && (e.metaKey || e.ctrlKey)){ e.preventDefault(); undo(); }
+});
+
+/* ---------- 启动 ---------- */
+initLevel(LEVELS[0].id);
+window.addEventListener('resize', () => { computeView(); render(); });
+</script>
+</body>
+</html>
